@@ -32,7 +32,7 @@ const HeroPage = () => {
             <TextAnimate animation="blurInUp" by="word" className="m-0" once>
               Earn on
             </TextAnimate>
-            <TextAnimate animation="blurInUp" by="word" className="m-0 text-green-500" once>
+            <TextAnimate animation="blurInUp" by="word" className="m-0 text-green-400" once>
               results.
             </TextAnimate>
           </div>

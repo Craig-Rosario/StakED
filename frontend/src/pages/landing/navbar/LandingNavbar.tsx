@@ -27,20 +27,20 @@ export default function LandingNavbar() {
 
         <div className="hidden md:flex items-center gap-4">
           <Button
-            className="flex items-center gap-2 bg-white hover:bg-[#fef3c7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
             onClick={() => scrollToSection("home")}
           >
             <Home className="w-4 h-4" /> Home
           </Button>
           <Button
-            className="flex items-center gap-2 bg-white border-4 border-black font-bold rounded-md hover:bg-[#fef3c7] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
-          // onClick={() => scrollToSection("features")}
+            className="flex items-center gap-2 bg-white border-4 border-black font-bold rounded-md hover:bg-[#e2fec7] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            onClick={() => scrollToSection("features")}
           >
             <Blocks className="w-4 h-4" /> Features
           </Button>
           <Button
-            className="flex items-center gap-2 bg-white hover:bg-[#fef3c7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
-          // onClick={() => scrollToSection("faq")}
+            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+          onClick={() => scrollToSection("faq")}
           >
             <CircleHelp className="w-4 h-4" /> FAQ
           </Button>
@@ -72,13 +72,13 @@ export default function LandingNavbar() {
           </Button>
           <Button
             className="w-full bg-white border-4 border-black font-bold uppercase rounded-md hover:bg-[#e0f7ff]"
-          // onClick={() => handleNavigate("leaderboard")}
+            onClick={() => scrollToSection("features")}
           >
             Features
           </Button>
           <Button
             className="w-full bg-white border-4 border-black font-bold uppercase rounded-md hover:bg-[#e0f7ff]"
-          // onClick={() => handleNavigate("portfolio")}
+          onClick={() => scrollToSection("faq")}
           >
             FAQ
           </Button>
