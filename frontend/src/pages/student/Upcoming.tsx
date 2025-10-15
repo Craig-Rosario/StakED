@@ -84,122 +84,129 @@ export default function UpcomingTestsDashboard() {
 
   const handleStakeSubmit = (e) => {
     e.preventDefault();
-    console.log(`Staking ${stakeAmount} SSTKD with ${confidence}% confidence`);
+    console.log(`Staking ${stakeAmount} ETH with ${confidence}% confidence`);
     closeStakeModal();
   };
 
   return (
     <div className="min-h-screen bg-white">
-      <div className={`p-4 sm:p-6 transition-all duration-300 ${showModal || showStakeModal ? 'blur-md' : ''}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl sm:text-5xl font-extrabold">
-              <span className="text-black">Stak</span>
-              <span className="text-red-500">E</span>
-              <span className="text-green-500">D</span>
-            </h1>
-            <p className="font-mono text-gray-600 mt-1">Student Confidence Market</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <div>
-                <h2 className="text-2xl font-extrabold text-gray-800 mb-6">Upcoming Tests</h2>
-                
-                <div className="space-y-4">
-                  {upcomingTests.map((test) => (
-                    <div 
-                      key={test.id}
-                      className="border-4 border-black p-4 bg-white shadow-[6px_6px_0px_#000000] hover:shadow-[3px_3px_0px_#000000] transition-all cursor-pointer"
-                      onClick={() => handleTestSelect(test)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-extrabold text-gray-800">{test.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{test.subtitle}</p>
-                          <p className="text-xs font-mono mt-2 bg-gray-100 inline-block px-2 py-1 border border-black">
-                            {test.timeLeft}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="w-12 h-12 rounded-full border-2 border-black flex items-center justify-center" 
-                               style={{ backgroundColor: `${test.color}30` }}>
-                            <span className="font-bold">{test.confidence}%</span>
-                          </div>
-                          <p className="text-xs mt-1 font-mono">{test.stakes} stakes</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-4">
-                        <div className="flex justify-between text-xs font-bold mb-1">
-                          <span>Confidence Level</span>
-                          <span>{test.confidence}%</span>
-                        </div>
-                        <div className="h-3 border-2 border-black bg-gray-100 overflow-hidden">
-                          <div 
-                            className="h-full" 
-                            style={{ 
-                              width: `${test.confidence}%`, 
-                              backgroundColor: test.color 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                      
-                      <NeoButton 
-                        className="w-full py-2 mt-4 text-lg"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleTestSelect(test);
-                        }}
-                      >
-                        STAKE NOW
-                      </NeoButton>
-                    </div>
-                  ))}
-                </div>
-              </div>
+      {/* Wrap ALL content including header in this blurred container */}
+      <div className={`min-h-screen transition-all duration-300 ${showModal || showStakeModal ? 'blur-md' : ''}`}>
+        {/* Your entire dashboard content goes here */}
+        <div className="p-3 sm:p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-6 sm:mb-8">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
+                <span className="text-black">Stak</span>
+                <span className="text-red-500">E</span>
+                <span className="text-green-500">D</span>
+              </h1>
+              <p className="font-mono text-gray-600 mt-1 text-sm sm:text-base">Student Confidence Market</p>
             </div>
 
-            <div>
-              <h2 className="text-2xl font-extrabold text-gray-800 mb-6">Classmates</h2>
-              
-              <div className="border-4 border-black bg-white shadow-[6px_6px_0px_#000000] p-4">
-                <div className="space-y-3">
-                  {classmates.map((classmate, index) => (
-                    <div key={index} className="flex justify-between items-center p-3 border-2 border-black bg-gray-50">
-                      <div>
-                        <p className="font-bold text-gray-800">{classmate.name}</p>
-                        <p className="text-xs text-gray-600">Confidence: {classmate.confidence}%</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+              {/* Left Column - Upcoming Tests */}
+              <div className="lg:col-span-2">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-4 sm:mb-6">Upcoming Tests</h2>
+                  
+                  <div className="space-y-3 sm:space-y-4">
+                    {upcomingTests.map((test) => (
+                      <div 
+                        key={test.id}
+                        className="border-4 border-black p-3 sm:p-4 bg-white shadow-[6px_6px_0px_#000000] hover:shadow-[3px_3px_0px_#000000] transition-all cursor-pointer"
+                        onClick={() => handleTestSelect(test)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg sm:text-xl font-extrabold text-gray-800 break-words">{test.title}</h3>
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1 break-words">{test.subtitle}</p>
+                            <p className="text-xs font-mono mt-2 bg-gray-100 inline-block px-2 py-1 border border-black">
+                              {test.timeLeft}
+                            </p>
+                          </div>
+                          <div className="text-right ml-2 flex-shrink-0">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-black flex items-center justify-center" 
+                                 style={{ backgroundColor: `${test.color}30` }}>
+                              <span className="font-bold text-sm sm:text-base">{test.confidence}%</span>
+                            </div>
+                            <p className="text-xs mt-1 font-mono">{test.stakes} stakes</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-3 sm:mt-4">
+                          <div className="flex justify-between text-xs font-bold mb-1">
+                            <span>Confidence Level</span>
+                            <span>{test.confidence}%</span>
+                          </div>
+                          <div className="h-2 sm:h-3 border-2 border-black bg-gray-100 overflow-hidden">
+                            <div 
+                              className="h-full" 
+                              style={{ 
+                                width: `${test.confidence}%`, 
+                                backgroundColor: test.color 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        <NeoButton 
+                          className="w-full py-2 mt-3 sm:mt-4 text-sm sm:text-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTestSelect(test);
+                          }}
+                        >
+                          STAKE NOW
+                        </NeoButton>
                       </div>
-                      <div className={`w-3 h-3 rounded-full border border-black ${
-                        classmate.status === 'high' ? 'bg-green-500' : 
-                        classmate.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}></div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-4 p-3 border-2 border-black bg-gray-100">
-                  <p className="text-sm font-bold text-gray-700">Class Avg: 78.8%</p>
-                  <p className="text-xs text-gray-600">Your rank: #2</p>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-8 border-4 border-black p-4 bg-white shadow-[6px_6px_0px_#000000]">
-                <h3 className="font-extrabold text-gray-800 mb-3">Quick Stats</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Active Stakes</span>
-                    <span className="font-bold">5</span>
+              {/* Right Column - Classmates */}
+              <div>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-4 sm:mb-6">Classmates</h2>
+                
+                <div className="border-4 border-black bg-white shadow-[6px_6px_0px_#000000] p-3 sm:p-4">
+                  <div className="space-y-2 sm:space-y-3">
+                    {classmates.map((classmate, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 sm:p-3 border-2 border-black bg-gray-50">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-gray-800 text-sm sm:text-base truncate">{classmate.name}</p>
+                          <p className="text-xs text-gray-600">Confidence: {classmate.confidence}%</p>
+                        </div>
+                        <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full border border-black flex-shrink-0 ml-2 ${
+                          classmate.status === 'high' ? 'bg-green-500' : 
+                          classmate.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}></div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Pending Results</span>
-                    <span className="font-bold">2</span>
+                  
+                  <div className="mt-3 sm:mt-4 p-2 sm:p-3 border-2 border-black bg-gray-100">
+                    <p className="text-xs sm:text-sm font-bold text-gray-700">Class Avg: 78.8%</p>
+                    <p className="text-xs text-gray-600">Your rank: #2</p>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Total Earnings</span>
-                    <span className="font-bold text-green-600">+245 SSTKD</span>
+                </div>
+
+                <div className="mt-6 sm:mt-8 border-4 border-black p-3 sm:p-4 bg-white shadow-[6px_6px_0px_#000000]">
+                  <h3 className="font-extrabold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Quick Stats</h3>
+                  <div className="space-y-1 sm:space-y-2">
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span>Active Stakes</span>
+                      <span className="font-bold">5</span>
+                    </div>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span>Pending Results</span>
+                      <span className="font-bold">2</span>
+                    </div>
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span>Total Earnings</span>
+                      <span className="font-bold text-green-600">+245 ETH</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -208,59 +215,60 @@ export default function UpcomingTestsDashboard() {
         </div>
       </div>
 
+      {/* Modals - Outside the blurred container */}
       {showModal && selectedTest && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-white border-4 border-black p-6 max-w-2xl w-full shadow-[12px_12px_0px_#000000] relative">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex-1">
-                <h1 className="text-3xl font-extrabold text-gray-800 mb-2"># {selectedTest.title}</h1>
-                <p className="text-lg text-gray-600 font-mono">{selectedTest.subtitle}</p>
+        <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-2xl w-full shadow-[12px_12px_0px_#000000] relative mx-auto">
+            <div className="flex justify-between items-start mb-4 sm:mb-6">
+              <div className="flex-1 pr-2">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2"># {selectedTest.title}</h1>
+                <p className="text-base sm:text-lg text-gray-600 font-mono">{selectedTest.subtitle}</p>
               </div>
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-2 sm:gap-4">
                 <div className="text-right">
-                  <div className="text-3xl font-extrabold" style={{ color: selectedTest.color }}>
+                  <div className="text-2xl sm:text-3xl font-extrabold" style={{ color: selectedTest.color }}>
                     {selectedTest.confidence}%
                   </div>
                   <p className="text-xs font-mono">Your Confidence</p>
                 </div>
                 <button 
                   onClick={closeModal}
-                  className="w-8 h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0"
+                  className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base"
                 >
                   ×
                 </button>
               </div>
             </div>
             
-            <div className="mb-6">
-              <p className="text-gray-700 leading-relaxed">{selectedTest.description}</p>
+            <div className="mb-4 sm:mb-6">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{selectedTest.description}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
-                <p className="text-sm font-bold text-gray-600 mb-1">TIME LEFT</p>
-                <p className="text-lg font-extrabold">{selectedTest.timeLeft}</p>
+                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TIME LEFT</p>
+                <p className="text-base sm:text-lg font-extrabold">{selectedTest.timeLeft}</p>
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 mb-1">TOTAL STAKES</p>
-                <p className="text-lg font-extrabold">{selectedTest.stakes}</p>
+                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TOTAL STAKES</p>
+                <p className="text-base sm:text-lg font-extrabold">{selectedTest.stakes}</p>
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 mb-1">DIFFICULTY</p>
-                <p className="text-lg font-extrabold">{selectedTest.difficulty}</p>
+                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">DIFFICULTY</p>
+                <p className="text-base sm:text-lg font-extrabold">{selectedTest.difficulty}</p>
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-600 mb-1">STUDY TIME</p>
-                <p className="text-lg font-extrabold">{selectedTest.studyTime}</p>
+                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">STUDY TIME</p>
+                <p className="text-base sm:text-lg font-extrabold">{selectedTest.studyTime}</p>
               </div>
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-xl font-extrabold text-gray-800 mb-4">Key Topics</h2>
+            <div className="mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-extrabold text-gray-800 mb-3 sm:mb-4">Key Topics</h2>
               <div className="grid grid-cols-2 gap-2">
                 {selectedTest.topics.map((topic, index) => (
-                  <div key={index} className="border border-black p-2 bg-white text-center">
-                    <span className="text-gray-700 font-medium text-sm">{topic}</span>
+                  <div key={index} className="border border-black p-1 sm:p-2 bg-white text-center">
+                    <span className="text-gray-700 font-medium text-xs sm:text-sm">{topic}</span>
                   </div>
                 ))}
               </div>
@@ -268,7 +276,7 @@ export default function UpcomingTestsDashboard() {
             
             <NeoButton 
               onClick={openStakeModal}
-              className="w-full py-4 text-xl mt-6"
+              className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6"
             >
               PLACE YOUR STAKE
             </NeoButton>
@@ -277,21 +285,21 @@ export default function UpcomingTestsDashboard() {
       )}
 
       {showStakeModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
-          <div className="bg-white border-4 border-black p-6 max-w-md w-full shadow-[12px_12px_0px_#000000] relative">
+        <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
+          <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-md w-full shadow-[12px_12px_0px_#000000] relative mx-3">
             <button 
               onClick={closeStakeModal}
-              className="absolute top-4 right-4 w-8 h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors"
+              className="absolute top-3 sm:top-4 right-3 sm:right-4 w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors text-sm sm:text-base"
             >
               ×
             </button>
             
-            <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Stake Your Confidence</h2>
-            <p className="text-gray-600 mb-6">Place your stake for {selectedTest?.title}</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-2">Stake Your Confidence</h2>
+            <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">Place your stake for {selectedTest?.title}</p>
             
-            <form onSubmit={handleStakeSubmit} className="space-y-6">
+            <form onSubmit={handleStakeSubmit} className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
                   How much do you think you'll score(%)? 
                 </label>
                 <input
@@ -300,12 +308,12 @@ export default function UpcomingTestsDashboard() {
                   max="100"
                   value={confidence}
                   onChange={(e) => setConfidence(Number(e.target.value))}
-                  className="w-full border-4 border-black p-3 text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
+                  className="w-full border-4 border-black p-2 sm:p-3 text-base sm:text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
                   Amount to Stake (ETH)
                 </label>
                 <input
@@ -313,14 +321,14 @@ export default function UpcomingTestsDashboard() {
                   min="1"
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(Number(e.target.value))}
-                  className="w-full border-4 border-black p-3 text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
+                  className="w-full border-4 border-black p-2 sm:p-3 text-base sm:text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
                 />
               </div>
               
               <NeoButton
                 type="submit"
                 variant="danger"
-                className="w-full py-4 text-xl"
+                className="w-full py-3 sm:py-4 text-lg sm:text-xl"
               >
                 CONFIRM STAKE
               </NeoButton>
