@@ -11,7 +11,6 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ studentName }) 
 
   const handleStakeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would handle the staking logic here (e.g., call a smart contract)
     alert(`Staking ${stakeAmount} ETH on ${studentName} with predicted score of ${confidence}%.`);
   };
 

@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import PerformanceDashboard from "@/components/custom/PerformanceDialog";
-import StakeDialogContent from "@/components/custom/StakeDialogContent"; // <-- Import the new stake dialog
+import StakeDialogContent from "@/components/custom/StakeDialogContent"; 
 
 const mockStudents = [
   {
