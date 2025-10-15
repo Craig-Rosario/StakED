@@ -26,13 +26,13 @@ const stats = [
 
 export default function PerformanceDashboard() {
   return (
-    <div className="p-8 min-h-screen ">
+    <div className="p-4 sm:p-8 min-h-screen">
       {/* Header */}
-      <h1 className="text-3xl font-extrabold text-gray-800">My Performance Analytics</h1>
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800">My Performance Analytics</h1>
       <p className="font-mono text-gray-600 mt-1 mb-6">Real-time confidence tracking</p>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {stats.map((stat, i) => (
           <div
             key={i}
