@@ -8,8 +8,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 p-6 md:grid-cols-3 gap-6 items-center">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <h3 className="text-2xl font-bold uppercase">
-                STAK<span className="text-[#00A2FF]">ED</span>
+              <h3 className="text-2xl font-bold">
+                 Stak<span className="text-[#FF4C4C]">E</span><span className="text-[#01a72a]">D</span>
               </h3>
             </div>
             <p className="font-mono text-sm font-bold text-[#111]">
