@@ -27,19 +27,19 @@ export default function LandingNavbar() {
 
         <div className="hidden md:flex items-center gap-4">
           <Button
-            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer"
             onClick={() => scrollToSection("home")}
           >
             <Home className="w-4 h-4" /> Home
           </Button>
           <Button
-            className="flex items-center gap-2 bg-white border-4 border-black font-bold rounded-md hover:bg-[#e2fec7] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            className="flex items-center gap-2 bg-white border-4 border-black font-bold rounded-md hover:bg-[#e2fec7] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer"
             onClick={() => scrollToSection("features")}
           >
             <Blocks className="w-4 h-4" /> Features
           </Button>
           <Button
-            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            className="flex items-center gap-2 bg-white hover:bg-[#e2fec7] border-4 border-black font-bold rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer"
           onClick={() => scrollToSection("faq")}
           >
             <CircleHelp className="w-4 h-4" /> FAQ
@@ -47,7 +47,7 @@ export default function LandingNavbar() {
         </div>
 
         <Button
-          className="hidden md:flex bg-[#00A2FF] text-white border-4 border-black font-bold uppercase rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+          className="hidden md:flex bg-[#00A2FF] text-white border-4 border-black font-bold uppercase rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer"
         // onClick={() => handleNavigate("login")}
         >
           <Wallet className="w-4 h-4" />Connect Wallet

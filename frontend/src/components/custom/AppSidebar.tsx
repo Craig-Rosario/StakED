@@ -73,7 +73,7 @@ export const AppSidebar = () => {
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={() =>
-                handleNavigate("upcomingTest", "/user/upcoming-tests")
+                handleNavigate("upcomingTest", "/user/upcoming")
               }
               isActive={activeTab === "upcomingTest"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
