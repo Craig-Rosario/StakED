@@ -11,7 +11,7 @@ const HeroPage = () => {
   return (
     <section
       id="home"
-      className="min-h-screen bg-[#F9F9F9] border-b-4 border-foreground flex flex-col items-center overflow-x-hidden"
+      className="min-h-screen bg-[#F9F9F9] border-b-4 border-foreground flex flex-col items-center overflow-x-hidden" 
     >
       <div className="w-full flex-shrink-0">
         <Scroller />
