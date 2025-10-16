@@ -14,8 +14,8 @@ const students: Student[] = [
   { id: "4", name: "Dhanush", ticker: "DHA", dailyChange: -1.1 },
   { id: "5", name: "Cheryl", ticker: "CHE", dailyChange: 0.8 },
   { id: "6", name: "Tim", ticker: "TIM", dailyChange: -2.4 },
-  { id: "6", name: "Bill", ticker: "BIL", dailyChange: -2.4 },
-  { id: "6", name: "Jake", ticker: "JKE", dailyChange: 3.4 },
+  { id: "7", name: "Kaustubh", ticker: "KATS", dailyChange: -2.4 },
+  { id: "8", name: "Ukarande", ticker: "UKI", dailyChange: 3.4 },
 ];
 
 const Scroller = () => {
