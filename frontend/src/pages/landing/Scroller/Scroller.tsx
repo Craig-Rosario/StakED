@@ -14,8 +14,8 @@ const students: Student[] = [
   { id: "4", name: "Dhanush", ticker: "DHA", dailyChange: -1.1 },
   { id: "5", name: "Cheryl", ticker: "CHE", dailyChange: 0.8 },
   { id: "6", name: "Tim", ticker: "TIM", dailyChange: -2.4 },
-  { id: "7", name: "Bill", ticker: "BIL", dailyChange: -2.4 },
-  { id: "8", name: "Jake", ticker: "JKE", dailyChange: 3.4 },
+  { id: "6", name: "Bill", ticker: "BIL", dailyChange: -2.4 },
+  { id: "6", name: "Jake", ticker: "JKE", dailyChange: 3.4 },
 ];
 
 const Scroller = () => {
@@ -36,15 +36,17 @@ const Scroller = () => {
           return (
             <div
               key={`${student.id}-${index}`}
-              className={`mono flex shrink-0 items-center gap-1 sm:gap-2 px-2 sm:px-4 transition-opacity ${blink ? "opacity-60" : "opacity-100"
-                }`}
+              className={`mono flex shrink-0 items-center gap-1 sm:gap-2 px-2 sm:px-4 transition-opacity ${
+                blink ? "opacity-60" : "opacity-100"
+              }`}
             >
               <span className="font-bold text-[#FAFAFA] text-sm sm:text-base md:text-lg whitespace-nowrap">
                 ${student.ticker}
               </span>
               <span
-                className={`flex items-center gap-0.5 sm:gap-1 font-bold text-xs sm:text-sm md:text-base whitespace-nowrap ${isPositive ? "text-[#00FF99]" : "text-[#FF4C4C]"
-                  }`}
+                className={`flex items-center gap-0.5 sm:gap-1 font-bold text-xs sm:text-sm md:text-base whitespace-nowrap ${
+                  isPositive ? "text-[#00FF99]" : "text-[#FF4C4C]"
+                }`}
               >
                 {isPositive ? "↑" : "↓"}
                 {isPositive ? "+" : ""}
@@ -61,7 +63,7 @@ const Scroller = () => {
           100% { transform: translateX(-33.333%); }
         }
         .animate-scroll {
-          animation: scroll 20s linear infinite;
+          animation: scroll 40s linear infinite;
           width: max-content;
           white-space: nowrap;
         }
