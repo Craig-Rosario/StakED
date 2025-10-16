@@ -25,6 +25,11 @@ export const AppSidebar = () => {
     navigate(route);
   };
 
+  const handleLogout = () => {
+    // Redirect to landing page
+    window.location.href = "http://localhost:5173";
+  };
+
   return (
     <Sidebar
       collapsible="icon"
@@ -32,9 +37,8 @@ export const AppSidebar = () => {
     >
       <SidebarHeader className="p-[14px] flex justify-center">
         <h1 className="text-2xl tracking-tighter">
-            
           <span className="hidden font-extrabold group-data-[state=expanded]:block">
-             Stak<span className="text-[#FF4C4C]">E</span><span className="text-[#01a72a]">D</span>
+            Stak<span className="text-[#FF4C4C]">E</span><span className="text-[#01a72a]">D</span>
           </span>
           <span className="hidden font-mono group-data-[state=expanded]:block text-sm text-gray-500">
             Student Confidence Market
@@ -63,7 +67,7 @@ export const AppSidebar = () => {
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center`}
+  group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <ChartLine className="w-6 h-6" />
               <span>My Analytics</span>
@@ -84,7 +88,7 @@ export const AppSidebar = () => {
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center`}
+  group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <CalendarDays className="w-6 h-6" />
               <span>Upcoming Tests</span>
@@ -103,7 +107,7 @@ export const AppSidebar = () => {
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                  gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center`}
+  group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <Users className="w-6 h-6" />
               <span>Classmates</span>
@@ -115,7 +119,10 @@ export const AppSidebar = () => {
       <SidebarFooter className="px-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100">
+            <SidebarMenuButton 
+              onClick={handleLogout}
+              className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100 cursor-pointer"
+            >
               <LogOut className="w-6 h-6" />
               <span>Logout</span>
             </SidebarMenuButton>
