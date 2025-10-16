@@ -72,3 +72,25 @@
     @apply font-heading;
   }
 }
+
+@layer utilities {
+  /* soft white / grayish white */
+  .shadow-white {
+    box-shadow: 4px 4px 0px #908f8f;
+  }
+
+  /* bright neon red */
+  .shadow-red {
+    box-shadow: 4px 4px 0px #ff4444;
+  }
+
+  /* glowing green / success tone */
+  .shadow-green {
+    box-shadow: 4px 4px 0px #00ff99;
+  }
+
+  /* rich gold / yellow accent */
+  .shadow-gold {
+    box-shadow: 4px 4px 0px #ffd700;
+  }
+}
