@@ -18,6 +18,8 @@ const mockStudents = [
     address: "0x4A...901",
     change: 8.4,
     avatar: "https://placehold.co/100x100/FFF/333?text=AJ",
+    winRate: 85,
+    stakes: 1527
   },
   {
     rank: 2,
@@ -25,6 +27,8 @@ const mockStudents = [
     address: "0x7B...2C4",
     change: 6.1,
     avatar: "https://placehold.co/100x100/FFF/333?text=BS",
+    winRate: 72,
+    stakes: 1528
   },
   {
     rank: 3,
@@ -32,27 +36,89 @@ const mockStudents = [
     address: "0x9E...5F7",
     change: 4.8,
     avatar: "https://placehold.co/100x100/FFF/333?text=CD",
+    winRate: 65,
+    stakes: 1527
   },
   {
     rank: 4,
     name: "David Wilson",
     address: "0x2D...8A3",
     change: -1.2,
-    avatar: "https://placehold.co/80x80/FFF/333?text=DW",
+    avatar: "https://placehold.co/100x100/FFF/333?text=DW",
+    winRate: 45,
+    stakes: 1528
   },
   {
     rank: 5,
     name: "Emma Brown",
     address: "0x5E...1B6",
     change: 2.7,
-    avatar: "https://placehold.co/80x80/FFF/333?text=EB",
+    avatar: "https://placehold.co/100x100/FFF/333?text=EB",
+    winRate: 78,
+    stakes: 1527
   },
   {
     rank: 6,
     name: "Frank Miller",
     address: "0x8F...C9E",
     change: 1.5,
-    avatar: "https://placehold.co/80x80/FFF/333?text=FM",
+    avatar: "https://placehold.co/100x100/FFF/333?text=FM",
+    winRate: 55,
+    stakes: 1528
+  },
+  {
+    rank: 7,
+    name: "Grace Lee",
+    address: "0x3C...7D2",
+    change: 3.2,
+    avatar: "https://placehold.co/100x100/FFF/333?text=GL",
+    winRate: 82,
+    stakes: 1527
+  },
+  {
+    rank: 8,
+    name: "Henry Taylor",
+    address: "0x6A...9F1",
+    change: -0.8,
+    avatar: "https://placehold.co/100x100/FFF/333?text=HT",
+    winRate: 38,
+    stakes: 1528
+  },
+  {
+    rank: 9,
+    name: "Ivy Chen",
+    address: "0x1B...4E8",
+    change: 5.1,
+    avatar: "https://placehold.co/100x100/FFF/333?text=IC",
+    winRate: 91,
+    stakes: 1527
+  },
+  {
+    rank: 10,
+    name: "Jack Martinez",
+    address: "0x9D...2A7",
+    change: 2.3,
+    avatar: "https://placehold.co/100x100/FFF/333?text=JM",
+    winRate: 60,
+    stakes: 1528
+  },
+  {
+    rank: 11,
+    name: "Katie Rodriguez",
+    address: "0x4F...8B5",
+    change: -2.1,
+    avatar: "https://placehold.co/100x100/FFF/333?text=KR",
+    winRate: 42,
+    stakes: 1527
+  },
+  {
+    rank: 12,
+    name: "Leo Anderson",
+    address: "0x7E...3C9",
+    change: 4.5,
+    avatar: "https://placehold.co/100x100/FFF/333?text=LA",
+    winRate: 88,
+    stakes: 1528
   },
 ];
 
@@ -74,6 +140,12 @@ const Classmates = () => {
       circleBgClass: "bg-orange-200",
     },
   ];
+
+  const getWinRateColor = (winRate: number) => {
+    if (winRate >= 80) return "text-green-600";
+    if (winRate >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
 
   return (
     <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
@@ -119,46 +191,46 @@ const Classmates = () => {
         </div>
       </section>
 
-      {/* Rest of Students */}
-      <section>
-        <div className="space-y-4">
+      <section className="mb-8">
+        <h2 className="text-2xl sm:text-3xl font-black mb-6 text-center">All Students</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {otherStudents.map((student) => (
-            <div
+            <div 
               key={student.rank}
-              className="bg-white p-4 border-2 border-black rounded-lg shadow-[4px_4px_0px_#000] flex flex-col sm:flex-row items-center sm:justify-between gap-4"
+              className="border-4 border-black bg-white p-6 shadow-[6px_6px_0px_#000000] hover:shadow-[3px_3px_0px_#000000] transition-all"
             >
-              <div className="flex items-center gap-4">
-                <span className="font-bold text-lg w-6 text-center">
-                  {student.rank}
-                </span>
+              <div className="flex items-center gap-4 mb-6">
                 <img
                   src={student.avatar}
                   alt={student.name}
-                  className="w-12 h-12 rounded-full border-2 border-black object-cover"
+                  className="w-16 h-16 rounded-full border-2 border-black object-cover"
                   onError={(e) => {
-                    e.currentTarget.src =
-                      "https://placehold.co/80x80?text=Error";
+                    e.currentTarget.src = "https://placehold.co/80x80?text=Error";
                   }}
                 />
-                <div>
-                  <h3 className="font-bold text-lg">{student.name}</h3>
-                  <div className="flex items-center gap-2 text-sm font-mono text-gray-600">
-                    <span>{student.address}</span>
-                    <span
-                      className={
-                        student.change > 0 ? "text-green-600" : "text-red-600"
-                      }
-                    >
-                      {student.change > 0 ? "▲" : "▼"}{" "}
-                      {Math.abs(student.change).toFixed(1)}%
-                    </span>
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-extrabold text-xl text-gray-800 truncate">{student.name}</h3>
+                  <p className="text-sm font-mono text-gray-600 truncate">{student.address}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-600 uppercase">WIN RATE</p>
+                  <p className={`text-2xl font-black ${getWinRateColor(student.winRate)}`}>
+                    {student.winRate}%
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-bold text-gray-600 uppercase">STAKES</p>
+                  <p className="text-2xl font-black text-gray-800">{student.stakes}</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <NeoButton className="bg-blue-400 px-4 py-1 text-sm text-white">
+                    <NeoButton className="flex-1 bg-blue-400 py-3 text-base text-white cursor-pointer">
                       VIEW
                     </NeoButton>
                   </DialogTrigger>
@@ -184,10 +256,9 @@ const Classmates = () => {
                   </DialogContent>
                 </Dialog>
 
-                {/* ADDED STAKE DIALOG HERE  */}
                 <Dialog>
                   <DialogTrigger asChild>
-                    <NeoButton className="bg-red-500 px-4 py-1 text-sm text-white">
+                    <NeoButton className="flex-1 bg-red-500 py-3 text-base text-white cursor-pointer">
                       STAKE
                     </NeoButton>
                   </DialogTrigger>

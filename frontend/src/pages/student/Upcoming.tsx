@@ -1,12 +1,42 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import StakeDialogContent from "@/components/custom/StakeDialogContent";
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
 
+interface Test {
+  id: number;
+  title: string;
+  subtitle: string;
+  timeLeft: string;
+  confidence: number;
+  stakes: number;
+  color: string;
+  description: string;
+  topics: string[];
+  difficulty: string;
+  studyTime: string;
+}
 
-const upcomingTests = [
+interface NeoButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  variant?: "primary" | "secondary" | "danger";
+  type?: "button" | "submit" | "reset";
+}
+
+interface StatCardProps {
+  title: string;
+  value: string;
+  subtitle: string;
+  trend: number;
+  className?: string;
+}
+
+const upcomingTests: Test[] = [
   {
     id: 1,
     title: "Math Midterm",
@@ -35,15 +65,13 @@ const upcomingTests = [
   }
 ];
 
-const classmates = [
-  { name: "Alex Chen", confidence: 92, status: "high" },
-  { name: "Maya Rodriguez", confidence: 78, status: "medium" },
-  { name: "Jordan Smith", confidence: 65, status: "medium" },
-  { name: "Taylor Kim", confidence: 88, status: "high" },
-  { name: "Riley Patel", confidence: 71, status: "medium" }
-];
-
-const NeoButton = ({ children, onClick, className = "", variant = "primary" }) => {
+const NeoButton: React.FC<NeoButtonProps> = ({ 
+  children, 
+  onClick, 
+  className = "", 
+  variant = "primary",
+  type = "button"
+}) => {
   const baseClasses = "font-extrabold border-2 border-black transition-all active:translate-x-1 active:translate-y-1 active:shadow-none";
   
   const variants = {
@@ -54,6 +82,7 @@ const NeoButton = ({ children, onClick, className = "", variant = "primary" }) =
 
   return (
     <button
+      type={type}
       className={`${baseClasses} ${variants[variant]} ${className}`}
       onClick={onClick}
     >
@@ -62,12 +91,46 @@ const NeoButton = ({ children, onClick, className = "", variant = "primary" }) =
   );
 };
 
+const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, trend, className = "" }) => {
+  const isGoodTrend = title === "Pending Results" ? trend < 0 : trend > 0;
+  const isBadTrend = title === "Pending Results" ? trend > 0 : trend < 0;
+
+  const getTrendColor = () => {
+    if (trend === 0) return "text-gray-600";
+    if (isGoodTrend) return "text-green-600";
+    if (isBadTrend) return "text-red-600";
+    return "text-gray-600";
+  };
+
+  const getTrendIcon = () => {
+    if (trend === 0) return "→";
+    if (isGoodTrend) return "↑";
+    if (isBadTrend) return "↓";
+    return "→";
+  };
+
+  return (
+    <div className={`border-2 border-black bg-white p-4 ${className}`}>
+      <div className="text-center mb-3">
+        <h3 className="font-extrabold text-gray-600 text-xs uppercase tracking-wide mb-2">{title}</h3>
+        <div className={`text-sm font-bold ${getTrendColor()}`}>
+          {getTrendIcon()} {Math.abs(trend)}%
+        </div>
+      </div>
+      <div className="text-center">
+        <p className="text-2xl font-extrabold text-gray-800 mb-1">{value}</p>
+        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{subtitle}</p>
+      </div>
+    </div>
+  );
+};
+
 export default function UpcomingTestsDashboard() {
-  const [selectedTest, setSelectedTest] = useState(null);
+  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showStakeModal, setShowStakeModal] = useState(false);
   
-  const handleTestSelect = (test) => {
+  const handleTestSelect = (test: Test) => {
     setSelectedTest(test);
     setShowModal(true);
   };
@@ -88,22 +151,19 @@ export default function UpcomingTestsDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Main dashboard content */}
       <div className="min-h-screen">
         <div className="p-3 sm:p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Header */}
             <div className="mb-6 sm:mb-8">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
-                <span className="text-black">Stak</span>
-                <span className="text-red-500">E</span>
-                <span className="text-green-500">D</span>
+                <span className="text-black">Upcoming</span>
+                <span className="text-green-500">Tests</span>
               </h1>
-              <p className="font-mono text-gray-600 mt-1 text-sm sm:text-base">Student Confidence Market</p>
+              
+              <p className="font-mono text-gray-600 mt-1 text-sm sm:text-base">Monitor your metrics. Make your move.</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-              {/* Left Column - Upcoming Tests */}
               <div className="lg:col-span-2">
                 <div>
                   <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-4 sm:mb-6">Upcoming Tests</h2>
@@ -148,61 +208,93 @@ export default function UpcomingTestsDashboard() {
                           </div>
                         </div>
                         
-                        <NeoButton 
-                          className="w-full py-2 mt-3 sm:mt-4 text-sm sm:text-lg"
-                          onClick={(e) => {
+                        <Button 
+                          className="w-full py-2 mt-3 sm:mt-4 text-sm sm:text-lg text-black bg-white cursor-pointer"
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             handleTestSelect(test);
                           }}
                         >
                           STAKE NOW
-                        </NeoButton>
+                        </Button>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Classmates */}
               <div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-4 sm:mb-6">Classmates</h2>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-4 sm:mb-6">Your Stats</h2>
                 
-                <div className="border-4 border-black bg-white shadow-[6px_6px_0px_#000000] p-3 sm:p-4">
-                  <div className="space-y-2 sm:space-y-3">
-                    {classmates.map((classmate, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 sm:p-3 border-2 border-black bg-gray-50">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-gray-800 text-sm sm:text-base truncate">{classmate.name}</p>
-                          <p className="text-xs text-gray-600">Confidence: {classmate.confidence}%</p>
-                        </div>
-                        <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full border border-black flex-shrink-0 ml-2 ${
-                          classmate.status === 'high' ? 'bg-green-500' : 
-                          classmate.status === 'medium' ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}></div>
-                      </div>
-                    ))}
-                  </div>
+                <div className="border-4 border-black p-4 sm:p-6 bg-white shadow-[6px_6px_0px_#000000]">
+                  <h3 className="font-extrabold text-gray-800 mb-6 text-lg sm:text-xl text-center">Performance Overview</h3>
                   
-                  <div className="mt-3 sm:mt-4 p-2 sm:p-3 border-2 border-black bg-gray-100">
-                    <p className="text-xs sm:text-sm font-bold text-gray-700">Class Avg: 78.8%</p>
-                    <p className="text-xs text-gray-600">Your rank: #2</p>
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <StatCard 
+                      title="Active Stakes" 
+                      value="5" 
+                      subtitle="Active Tests"
+                      trend={12}
+                      className="bg-blue-50"
+                    />
+                    <StatCard 
+                      title="Pending Results" 
+                      value="2" 
+                      subtitle="Awaiting"
+                      trend={5}
+                      className="bg-yellow-50"
+                    />
+                    <StatCard 
+                      title="Total Earnings" 
+                      value="+245" 
+                      subtitle="ETH Earned"
+                      trend={18}
+                      className="bg-green-50"
+                    />
+                    <StatCard 
+                      title="Win Rate" 
+                      value="84%" 
+                      subtitle="Accuracy Rate"
+                      trend={3}
+                      className="bg-purple-50"
+                    />
                   </div>
-                </div>
 
-                <div className="mt-6 sm:mt-8 border-4 border-black p-3 sm:p-4 bg-white shadow-[6px_6px_0px_#000000]">
-                  <h3 className="font-extrabold text-gray-800 mb-2 sm:mb-3 text-sm sm:text-base">Quick Stats</h3>
-                  <div className="space-y-1 sm:space-y-2">
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span>Active Stakes</span>
-                      <span className="font-bold">5</span>
+                  <div className="mb-6">
+                    <h4 className="font-extrabold text-gray-800 mb-4 text-sm sm:text-base text-center">Recent Activity</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-3 border-2 border-black bg-gray-50">
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Math Quiz</p>
+                          <p className="text-xs text-gray-600">Staked 50 ETH</p>
+                        </div>
+                        <span className="text-green-600 font-bold text-sm">+25 ETH</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 border-2 border-black bg-gray-50">
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Physics Lab</p>
+                          <p className="text-xs text-gray-600">Staked 30 ETH</p>
+                        </div>
+                        <span className="text-green-600 font-bold text-sm">+15 ETH</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 border-2 border-black bg-gray-50">
+                        <div className="text-left">
+                          <p className="font-bold text-sm">Chem Final</p>
+                          <p className="text-xs text-gray-600">Pending result</p>
+                        </div>
+                        <span className="text-yellow-600 font-bold text-sm">⏳</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span>Pending Results</span>
-                      <span className="font-bold">2</span>
+                  </div>
+
+                  <div className="p-4 border-2 border-black bg-gray-100">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold text-gray-700">Overall Rank:</span>
+                      <span className="text-sm font-extrabold">#2</span>
                     </div>
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span>Total Earnings</span>
-                      <span className="font-bold text-green-600">+245 ETH</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-bold text-gray-700">Total Staked:</span>
+                      <span className="text-sm font-extrabold">180 ETH</span>
                     </div>
                   </div>
                 </div>
@@ -212,13 +304,10 @@ export default function UpcomingTestsDashboard() {
         </div>
       </div>
 
-      {/* Details Modal */}
       {showModal && selectedTest && (
         <>
-          {/* Backdrop with a dark, semi-transparent background */}
           <div className="fixed inset-0 z-40 bg-black/60" />
           
-          {/* Original Modal Content */}
           <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
             <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-2xl w-full shadow-[12px_12px_0px_#000000] relative mx-auto">
               <div className="flex justify-between items-start mb-4 sm:mb-6">
@@ -235,7 +324,7 @@ export default function UpcomingTestsDashboard() {
                   </div>
                   <button 
                     onClick={closeModal}
-                    className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base"
+                    className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base cursor-pointer"
                   >
                     ×
                   </button>
@@ -278,7 +367,7 @@ export default function UpcomingTestsDashboard() {
               
               <NeoButton 
                 onClick={openStakeModal}
-                className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6"
+                className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6 cursor-pointer"
               >
                 PLACE YOUR STAKE
               </NeoButton>
@@ -287,7 +376,6 @@ export default function UpcomingTestsDashboard() {
         </>
       )}
 
-      {/* Stake Dialog using reusable component */}
       <Dialog open={showStakeModal} onOpenChange={(isOpen) => { if (!isOpen) closeStakeModal(); }}>
         <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
           <StakeDialogContent stakeTargetName={selectedTest?.title || 'this test'} isSelfStake={true} />
