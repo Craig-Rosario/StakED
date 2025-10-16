@@ -53,7 +53,6 @@ export default function LandingNavbar() {
           <Wallet className="w-4 h-4" />Connect Wallet
         </Button>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden p-2 border-2 border-black rounded-md"
           onClick={() => setIsOpen(!isOpen)}

@@ -5,7 +5,6 @@ const Footer = () => {
     <footer className="border-t-4 border-[#2a2a2a] bg-gradient-to-b from-[#1f1f1f] via-[#121212] to-[#050505] text-white">
       <div className="max-w-9xl mx-auto">
         <div className="grid grid-cols-1 p-6 md:grid-cols-3 gap-6 items-center">
-          {/* --- Left Section --- */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-2xl font-bold">
@@ -22,7 +21,6 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* --- Center Links --- */}
           <div className="flex flex-wrap justify-center gap-6 font-bold text-sm">
             <a
               href="https://github.com/Craig-Rosario/StakED"
@@ -38,7 +36,6 @@ const Footer = () => {
             </a>
           </div>
 
-          {/* --- Right Section (Icon) --- */}
           <div className="flex justify-center md:justify-end gap-4">
             <a
               href="https://github.com/Craig-Rosario/StakED"
@@ -49,7 +46,6 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* --- Bottom Bar --- */}
         <div className="mt-8 p-6 border-t-4 border-[#2a2a2a] text-center">
           <p className="font-mono text-xs text-gray-500">
             © 2025 StakED. All rights reserved.
