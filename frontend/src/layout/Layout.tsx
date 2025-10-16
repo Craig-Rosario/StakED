@@ -1,7 +1,7 @@
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/custom/AppSidebar";
-import { AppNavbar } from "@/components/custom/AppNavbar"; // ✅ import navbar
+import { AppNavbar } from "@/components/custom/AppNavbar";
 import { Outlet } from "react-router-dom";
 
 const Layout = () => {
