@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { NeoButton } from '@/components/custom/NeoButton';
+import { Button } from '../ui/button';
 
 interface StakeDialogContentProps {
   stakeTargetName: string;
   isSelfStake?: boolean;
+  onClose?: () => void;
 }
 
-const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName, isSelfStake = false }) => {
+const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName, isSelfStake = false, onClose }) => {
   const [confidence, setConfidence] = useState(50);
   const [stakeAmount, setStakeAmount] = useState(1);
 
@@ -20,7 +22,16 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName
     : "How much do you think they'll score (%)?";
 
   return (
-    <div>
+    <div className="relative">
+      {onClose && (
+        <button 
+          onClick={onClose}
+          className="absolute top-0 right-0 w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base cursor-pointer"
+        >
+          X
+        </button>
+      )}
+      
       <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Stake Your Confidence</h2>
       <p className="text-gray-600 mb-6">Place your stake for {stakeTargetName}</p>
       
@@ -54,12 +65,12 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName
           />
         </div>
         
-        <NeoButton
+        <Button
           type="submit"
-          className="w-full py-4 text-xl bg-red-500 text-white"
+          className="w-full py-4 text-xl bg-red-500 text-white cursor-pointer"
         >
           CONFIRM STAKE
-        </NeoButton>
+        </Button>
       </form>
     </div>
   );
