@@ -70,7 +70,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
         <NeoButton className="bg-red-500 text-white px-4 py-1 text-sm">STAKE</NeoButton>
       </DialogTrigger>
       <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
-        <StakeDialogContent studentName={name} />
+        <StakeDialogContent stakeTargetName={name} />
       </DialogContent>
     </Dialog>
   );

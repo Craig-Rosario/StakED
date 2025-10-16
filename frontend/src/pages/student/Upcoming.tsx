@@ -1,4 +1,10 @@
 import { useState } from "react";
+import StakeDialogContent from "@/components/custom/StakeDialogContent";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+
 
 const upcomingTests = [
   {
@@ -60,8 +66,6 @@ export default function UpcomingTestsDashboard() {
   const [selectedTest, setSelectedTest] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showStakeModal, setShowStakeModal] = useState(false);
-  const [confidence, setConfidence] = useState(85);
-  const [stakeAmount, setStakeAmount] = useState(100);
   
   const handleTestSelect = (test) => {
     setSelectedTest(test);
@@ -82,17 +86,10 @@ export default function UpcomingTestsDashboard() {
     setShowStakeModal(false);
   };
 
-  const handleStakeSubmit = (e) => {
-    e.preventDefault();
-    console.log(`Staking ${stakeAmount} ETH with ${confidence}% confidence`);
-    closeStakeModal();
-  };
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Wrap ALL content including header in this blurred container */}
-      <div className={`min-h-screen transition-all duration-300 ${showModal || showStakeModal ? 'blur-md' : ''}`}>
-        {/* Your entire dashboard content goes here */}
+      {/* Main dashboard content */}
+      <div className="min-h-screen">
         <div className="p-3 sm:p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
@@ -215,127 +212,87 @@ export default function UpcomingTestsDashboard() {
         </div>
       </div>
 
-      {/* Modals - Outside the blurred container */}
+      {/* Details Modal */}
       {showModal && selectedTest && (
-        <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
-          <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-2xl w-full shadow-[12px_12px_0px_#000000] relative mx-auto">
-            <div className="flex justify-between items-start mb-4 sm:mb-6">
-              <div className="flex-1 pr-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2"># {selectedTest.title}</h1>
-                <p className="text-base sm:text-lg text-gray-600 font-mono">{selectedTest.subtitle}</p>
-              </div>
-              <div className="flex items-start gap-2 sm:gap-4">
-                <div className="text-right">
-                  <div className="text-2xl sm:text-3xl font-extrabold" style={{ color: selectedTest.color }}>
-                    {selectedTest.confidence}%
-                  </div>
-                  <p className="text-xs font-mono">Your Confidence</p>
+        <>
+          {/* Backdrop with a dark, semi-transparent background */}
+          <div className="fixed inset-0 z-40 bg-black/60" />
+          
+          {/* Original Modal Content */}
+          <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-2xl w-full shadow-[12px_12px_0px_#000000] relative mx-auto">
+              <div className="flex justify-between items-start mb-4 sm:mb-6">
+                <div className="flex-1 pr-2">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2"># {selectedTest.title}</h1>
+                  <p className="text-base sm:text-lg text-gray-600 font-mono">{selectedTest.subtitle}</p>
                 </div>
-                <button 
-                  onClick={closeModal}
-                  className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-            
-            <div className="mb-4 sm:mb-6">
-              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{selectedTest.description}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TIME LEFT</p>
-                <p className="text-base sm:text-lg font-extrabold">{selectedTest.timeLeft}</p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TOTAL STAKES</p>
-                <p className="text-base sm:text-lg font-extrabold">{selectedTest.stakes}</p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">DIFFICULTY</p>
-                <p className="text-base sm:text-lg font-extrabold">{selectedTest.difficulty}</p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">STUDY TIME</p>
-                <p className="text-base sm:text-lg font-extrabold">{selectedTest.studyTime}</p>
-              </div>
-            </div>
-
-            <div className="mb-4 sm:mb-6">
-              <h2 className="text-lg sm:text-xl font-extrabold text-gray-800 mb-3 sm:mb-4">Key Topics</h2>
-              <div className="grid grid-cols-2 gap-2">
-                {selectedTest.topics.map((topic, index) => (
-                  <div key={index} className="border border-black p-1 sm:p-2 bg-white text-center">
-                    <span className="text-gray-700 font-medium text-xs sm:text-sm">{topic}</span>
+                <div className="flex items-start gap-2 sm:gap-4">
+                  <div className="text-right">
+                    <div className="text-2xl sm:text-3xl font-extrabold" style={{ color: selectedTest.color }}>
+                      {selectedTest.confidence}%
+                    </div>
+                    <p className="text-xs font-mono">Your Confidence</p>
                   </div>
-                ))}
+                  <button 
+                    onClick={closeModal}
+                    className="w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors flex-shrink-0 text-sm sm:text-base"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
+              
+              <div className="mb-4 sm:mb-6">
+                <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{selectedTest.description}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TIME LEFT</p>
+                  <p className="text-base sm:text-lg font-extrabold">{selectedTest.timeLeft}</p>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">TOTAL STAKES</p>
+                  <p className="text-base sm:text-lg font-extrabold">{selectedTest.stakes}</p>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">DIFFICULTY</p>
+                  <p className="text-base sm:text-lg font-extrabold">{selectedTest.difficulty}</p>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm font-bold text-gray-600 mb-1">STUDY TIME</p>
+                  <p className="text-base sm:text-lg font-extrabold">{selectedTest.studyTime}</p>
+                </div>
+              </div>
+
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-extrabold text-gray-800 mb-3 sm:mb-4">Key Topics</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedTest.topics.map((topic, index) => (
+                    <div key={index} className="border border-black p-1 sm:p-2 bg-white text-center">
+                      <span className="text-gray-700 font-medium text-xs sm:text-sm">{topic}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <NeoButton 
+                onClick={openStakeModal}
+                className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6"
+              >
+                PLACE YOUR STAKE
+              </NeoButton>
             </div>
-            
-            <NeoButton 
-              onClick={openStakeModal}
-              className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6"
-            >
-              PLACE YOUR STAKE
-            </NeoButton>
           </div>
-        </div>
+        </>
       )}
 
-      {showStakeModal && (
-        <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 z-50">
-          <div className="bg-white border-4 border-black p-4 sm:p-6 max-w-md w-full shadow-[12px_12px_0px_#000000] relative mx-3">
-            <button 
-              onClick={closeStakeModal}
-              className="absolute top-3 sm:top-4 right-3 sm:right-4 w-6 h-6 sm:w-8 sm:h-8 border-2 border-black bg-white flex items-center justify-center font-bold hover:bg-black hover:text-white transition-colors text-sm sm:text-base"
-            >
-              ×
-            </button>
-            
-            <h2 className="text-xl sm:text-2xl font-extrabold text-gray-800 mb-2">Stake Your Confidence</h2>
-            <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">Place your stake for {selectedTest?.title}</p>
-            
-            <form onSubmit={handleStakeSubmit} className="space-y-4 sm:space-y-6">
-              <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
-                  How much do you think you'll score(%)? 
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={confidence}
-                  onChange={(e) => setConfidence(Number(e.target.value))}
-                  className="w-full border-4 border-black p-2 sm:p-3 text-base sm:text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
-                  Amount to Stake (ETH)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={stakeAmount}
-                  onChange={(e) => setStakeAmount(Number(e.target.value))}
-                  className="w-full border-4 border-black p-2 sm:p-3 text-base sm:text-lg font-bold text-center bg-white focus:outline-none focus:border-gray-500"
-                />
-              </div>
-              
-              <NeoButton
-                type="submit"
-                variant="danger"
-                className="w-full py-3 sm:py-4 text-lg sm:text-xl"
-              >
-                CONFIRM STAKE
-              </NeoButton>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Stake Dialog using reusable component */}
+      <Dialog open={showStakeModal} onOpenChange={(isOpen) => { if (!isOpen) closeStakeModal(); }}>
+        <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
+          <StakeDialogContent stakeTargetName={selectedTest?.title || 'this test'} isSelfStake={true} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
