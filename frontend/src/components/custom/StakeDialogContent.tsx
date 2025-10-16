@@ -2,27 +2,32 @@ import React, { useState } from 'react';
 import { NeoButton } from '@/components/custom/NeoButton';
 
 interface StakeDialogContentProps {
-  studentName: string;
+  stakeTargetName: string;
+  isSelfStake?: boolean;
 }
 
-const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ studentName }) => {
+const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName, isSelfStake = false }) => {
   const [confidence, setConfidence] = useState(50);
   const [stakeAmount, setStakeAmount] = useState(1);
 
   const handleStakeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Staking ${stakeAmount} ETH on ${studentName} with predicted score of ${confidence}%.`);
+    alert(`Staking ${stakeAmount} ETH on ${stakeTargetName} with predicted score of ${confidence}%.`);
   };
+  
+  const scoreLabel = isSelfStake
+    ? "How much do you think you will score?"
+    : "How much do you think they'll score (%)?";
 
   return (
     <div>
       <h2 className="text-2xl font-extrabold text-gray-800 mb-2">Stake Your Confidence</h2>
-      <p className="text-gray-600 mb-6">Place your stake for {studentName}</p>
+      <p className="text-gray-600 mb-6">Place your stake for {stakeTargetName}</p>
       
       <form onSubmit={handleStakeSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            How much do you think they'll score (%)? 
+            {scoreLabel} 
           </label>
           <input
             type="number"

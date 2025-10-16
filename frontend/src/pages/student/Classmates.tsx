@@ -192,7 +192,7 @@ const Classmates = () => {
                     </NeoButton>
                   </DialogTrigger>
                   <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
-                    <StakeDialogContent studentName={student.name} />
+                    <StakeDialogContent stakeTargetName={student.name} isSelfStake={false} />
                   </DialogContent>
                 </Dialog>
               </div>
