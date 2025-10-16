@@ -12,11 +12,12 @@ const Faq = () => {
     return (
         <section
             id="faq"
-            className="min-h-screen bg-[#F9F9F9] border-b-4 border-foreground flex flex-col items-center overflow-x-hidden"
+            className="min-h-screen bg-[#121212] text-white border-t-4 border-[#2a2a2a] flex flex-col items-center overflow-x-hidden"
         >
-
+            <div className="w-full flex-shrink-0 border-t-4 border-[#2a2a2a]">
+            </div>
             <div className="flex flex-col items-center justify-center w-full flex-grow pb-10 sm:pb-16 px-4 sm:px-8 text-center">
-                <h2 className="text-5xl sm:text-6xl font-black uppercase text-center mb-16 text-[#111]">
+                <h2 className="text-5xl sm:text-6xl font-black uppercase text-center mb-16 text-white leading-tight">
                     <TextAnimate animation="blurInUp" by="word" once>
                         FREQUENTLY ASKED
                     </TextAnimate>{" "}
@@ -63,8 +64,8 @@ const Faq = () => {
                                 viewport={{ once: true }}
                             >
                                 <AccordionItem value={faq.id}>
-                                    <div className="border-4 border-black bg-white rounded-lg text-left">
-                                        <AccordionTrigger className="text-lg sm:text-xl font-bold px-6 py-4 text-black">
+                                    <div className="border-4 border-[#555555] bg-[#1e1e1e] rounded-lg text-left shadow-[6px_6px_0px_#2a2a2a] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
+                                        <AccordionTrigger className="text-lg sm:text-xl font-bold px-6 py-4 text-[#fffdfd] transition-colors">
                                             {faq.question}
                                         </AccordionTrigger>
                                         <AccordionContent className="px-6 py-4 text-base sm:text-lg font-medium text-black">
@@ -77,9 +78,10 @@ const Faq = () => {
                     </Accordion>
                 </div>
             </div>
-            <div className="w-full flex-shrink-0">
-                <Scroller />
-            </div>
+
+
+            <Scroller />
+
         </section>
     );
 };

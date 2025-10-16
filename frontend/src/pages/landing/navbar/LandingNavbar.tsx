@@ -14,7 +14,7 @@ export default function LandingNavbar() {
   };
 
   return (
-    <nav className="w-full border-b-4 border-foreground bg-card z-50 top-0">
+    <nav className="bg-white w-full border-b-4 border-foreground bg-card z-50 top-0">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         <div
           className="flex items-center gap-3 cursor-pointer"
@@ -53,7 +53,6 @@ export default function LandingNavbar() {
           <Wallet className="w-4 h-4" />Connect Wallet
         </Button>
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden p-2 border-2 border-black rounded-md"
           onClick={() => setIsOpen(!isOpen)}
