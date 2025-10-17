@@ -1,15 +1,16 @@
-const express = require('express');
-const User = require('../models/User');
+import express from "express";
+import User from "../models/User.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
 
-// Get all users
-router.get('/', async (req, res) => {
+router.get("/me", verifyToken, async (req, res) => {
   try {
-    const users = await User.find({});
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching users', error: error.message });
+    const user = await User.findById(req.user.userId).select("-nonce");
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to fetch user", error: err.message });
   }
 });
 
-module.exports = router;
+export default router;
