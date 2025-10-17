@@ -4,20 +4,26 @@ import { motion } from "framer-motion";
 import Scroller from "../Scroller/Scroller";
 import { loginWithMetaMask } from "@/lib/web3Auth";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 
 const HeroPage = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleMetaMaskLogin = async () => {
     try {
       setLoading(true);
-      const loggedUser = await loginWithMetaMask();
+
+      const loggedUser = await loginWithMetaMask(); 
       setUser(loggedUser);
 
-      navigate("/user/dashboard");
+      if (loggedUser?.role === "verifier") {
+        navigate("/verifier/dashboard");
+      } else {
+        navigate("/user/dashboard");
+      }
+
     } catch (err: any) {
       console.error(err);
       alert(err.message || "MetaMask login failed");
@@ -25,7 +31,6 @@ const HeroPage = () => {
       setLoading(false);
     }
   };
-
 
   return (
     <section

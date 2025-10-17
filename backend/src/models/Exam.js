@@ -7,10 +7,24 @@ const examSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    class: {
+    description: {
+      type: String,
+      trim: true,
+    },
+    classId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",
       required: true,
+    },
+    verifier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    maxMarks: {
+      type: Number,
+      default: 100,
+      min: 0,
     },
     examDate: {
       type: Date,
@@ -31,10 +45,11 @@ const examSchema = new mongoose.Schema(
     totalStakePool: {
       type: Number,
       default: 0,
+      min: 0,
     },
     status: {
       type: String,
-      enum: ["upcoming", "staking", "completed", "grading", "revealed"],
+      enum: ["upcoming", "staking", "grading", "revealed", "completed"],
       default: "upcoming",
     },
     commitHash: {

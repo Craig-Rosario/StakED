@@ -8,6 +8,7 @@ import VerifierDashboard from "@/pages/verifier/VerifierDashboard";
 import LayoutVerifier from "@/layout/LayoutVerifier";
 import VerifierClasses from "@/pages/verifier/VerifierClasses";
 import CreateExam from "@/pages/verifier/CreateExam";
+import VerifierClassesDetails from "@/pages/verifier/VerifierClassesDetails";
 
 const AppRoutes = () => {
   return (
@@ -22,6 +23,7 @@ const AppRoutes = () => {
       <Route element={<LayoutVerifier />}>
         <Route path="/verifier/dashboard" element={<VerifierDashboard />} />
         <Route path="/verifier/classes" element={<VerifierClasses />} />
+        <Route path="/verifier/classes/:classId" element={<VerifierClassesDetails />} />
         <Route path="/verifier/create-exam" element={<CreateExam />} />
       </Route>
     </Routes>

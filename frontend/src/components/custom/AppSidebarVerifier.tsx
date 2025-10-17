@@ -12,7 +12,7 @@ import {
     SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { ChartLine, CalendarDays, LogOut, Users } from "lucide-react";
+import { ChartLine, CalendarDays, LogOut } from "lucide-react";
 
 const AppSidebarVerifier = () => {
     const [activeTab, setActiveTab] = useState<
@@ -89,23 +89,7 @@ const AppSidebarVerifier = () => {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
 
-                    <SidebarMenuItem>
-                        <SidebarMenuButton
-                            onClick={() => handleNavigate("classmates", "/verifier/create-exam")}
-                            isActive={activeTab === "classmates"}
-                            className={`px-4 py-3 flex text-lg border-4 border-black font-bold
-                transition-transform hover:scale-100
-                ${activeTab === "classmates"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                }
-                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center`}
-                        >
-                            <Users className="w-6 h-6" />
-                            <span>Create Exam</span>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
+
                 </SidebarMenu>
             </SidebarContent>
 
@@ -113,7 +97,12 @@ const AppSidebarVerifier = () => {
             <SidebarFooter className="px-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100" onClick={()=>navigate("/")}>
+                        <SidebarMenuButton className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100" onClick={() => {
+                            localStorage.removeItem("token");
+                            navigate("/");
+                            window.location.reload();
+                        }}
+                        >
                             <LogOut className="w-6 h-6" />
                             <span>Logout</span>
                         </SidebarMenuButton>
