@@ -1,25 +1,34 @@
 import express from "express";
-import Stake from "../models/Stake.js";
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
+import Class from "../models/Class.js";
+import Exam from "../models/Exam.js"; 
 
 const router = express.Router();
 
-router.post("/update", verifyToken, checkRole(["verifier"]), async (req, res) => {
+router.get("/stats", verifyToken, checkRole(["verifier"]), async (req, res) => {
   try {
-    const { stakeId, isWinner, actualScore, rewardAmount } = req.body;
+    const verifierId = req.user.userId;
 
-    const stake = await Stake.findOne({ stakeId });
-    if (!stake) return res.status(404).json({ message: "Stake not found" });
+    const totalClasses = await Class.countDocuments({ verifier: verifierId });
 
-    stake.isWinner = isWinner;
-    stake.actualScore = actualScore;
-    stake.rewardAmount = rewardAmount;
-    stake.status = "verified";
-    await stake.save();
+    let totalExams = 0;
+    try {
+      totalExams = await Exam.countDocuments({ verifier: verifierId });
+    } catch {
+      console.log("Exam model not found — skipping exam count");
+    }
 
-    res.json({ success: true, stake });
+    res.json({
+      success: true,
+      totalClasses,
+      totalExams,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Error updating stake", error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching stats",
+      error: err.message,
+    });
   }
 });
 

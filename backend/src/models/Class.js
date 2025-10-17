@@ -12,11 +12,12 @@ const classSchema = new mongoose.Schema(
       required: true,
       unique: true,
       uppercase: true,
+      trim: true,
     },
-    teacher: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    description: {
+      type: String,
+      default: "",
+      trim: true,
     },
     verifier: {
       type: mongoose.Schema.Types.ObjectId,
@@ -32,6 +33,7 @@ const classSchema = new mongoose.Schema(
     rewardPool: {
       type: Number,
       default: 0,
+      min: 0,
     },
     isActive: {
       type: Boolean,
@@ -40,6 +42,8 @@ const classSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+classSchema.index({ code: 1 }, { unique: true });
 
 const Class = mongoose.model("Class", classSchema);
 export default Class;
