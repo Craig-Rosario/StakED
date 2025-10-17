@@ -1,111 +1,105 @@
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { ethers } = require('ethers');
-const User = require('../models/User');
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { ethers } from "ethers";
+import User from "../models/User.js";
 
-const authController = {
-  // Get nonce for wallet signing
+const generateNonce = () => crypto.randomBytes(16).toString("hex");
+
+export const authController = {
   getNonce: async (req, res) => {
     try {
       const { walletAddress } = req.body;
-      
-      if (!walletAddress) {
-        return res.status(400).json({ message: 'Wallet address required' });
-      }
+      if (!walletAddress) return res.status(400).json({ success: false, message: "Wallet address is required." });
 
-      const nonce = crypto.randomBytes(32).toString('hex');
-      
-      let user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
-      
+      const lowerWallet = walletAddress.toLowerCase();
+      let user = await User.findOne({ walletAddress: lowerWallet });
+      const nonce = generateNonce();
+
       if (!user) {
-        // Return nonce for new user registration
-        return res.json({ 
+        return res.status(200).json({
+          success: true,
+          isNewUser: true,
           nonce,
-          isNewUser: true 
+          message: "New user. Proceed with signup after signature verification.",
         });
       }
 
-      // Update existing user's nonce
       user.nonce = nonce;
       await user.save();
 
-      res.json({ 
+      res.status(200).json({
+        success: true,
+        isNewUser: false,
         nonce,
-        isNewUser: false 
+        message: "Nonce generated successfully.",
       });
     } catch (error) {
-      res.status(500).json({ message: 'Error generating nonce', error: error.message });
+      console.error(error);
+      res.status(500).json({ success: false, message: "Server error while generating nonce." });
     }
   },
 
-  // Verify signature and authenticate
   verifySignature: async (req, res) => {
     try {
       const { walletAddress, signature, nonce, username, role } = req.body;
+      if (!walletAddress || !signature || !nonce)
+        return res.status(400).json({ success: false, message: "Missing required fields." });
 
-      if (!walletAddress || !signature || !nonce) {
-        return res.status(400).json({ message: 'Missing required fields' });
-      }
-
-      // Verify signature
       const message = `StakED Login Nonce: ${nonce}`;
       const recoveredAddress = ethers.verifyMessage(message, signature);
+      if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase())
+        return res.status(401).json({ success: false, message: "Invalid signature." });
 
-      if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-        return res.status(401).json({ message: 'Invalid signature' });
-      }
-
-      let user = await User.findOne({ walletAddress: walletAddress.toLowerCase() });
+      const lowerWallet = walletAddress.toLowerCase();
+      let user = await User.findOne({ walletAddress: lowerWallet });
 
       if (!user) {
-        // Create new user
-        if (!username || !role) {
-          return res.status(400).json({ message: 'Username and role required for new user' });
-        }
+        if (!username || !role)
+          return res.status(400).json({ success: false, message: "Username and role required for new user." });
 
         user = new User({
-          walletAddress: walletAddress.toLowerCase(),
+          walletAddress: lowerWallet,
           username,
           role,
-          nonce: crypto.randomBytes(32).toString('hex')
+          nonce: generateNonce(),
         });
 
         await user.save();
       } else {
-        // Verify nonce matches
-        if (user.nonce !== nonce) {
-          return res.status(401).json({ message: 'Invalid nonce' });
-        }
-        
-        // Update nonce for security
-        user.nonce = crypto.randomBytes(32).toString('hex');
+        if (user.nonce !== nonce)
+          return res.status(401).json({ success: false, message: "Invalid or expired nonce." });
+
+        user.nonce = generateNonce();
         await user.save();
       }
 
-      // Generate JWT token
+      if (!process.env.JWT_SECRET)
+        return res.status(500).json({ success: false, message: "Server misconfiguration." });
+
       const token = jwt.sign(
-        { 
-          userId: user._id, 
+        {
+          userId: user._id,
           walletAddress: user.walletAddress,
-          role: user.role 
+          role: user.role,
         },
         process.env.JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: "24h" }
       );
 
-      res.json({
+      res.status(200).json({
+        success: true,
         token,
         user: {
           id: user._id,
           walletAddress: user.walletAddress,
           username: user.username,
-          role: user.role
-        }
+          role: user.role,
+        },
+        message: "Authentication successful.",
       });
     } catch (error) {
-      res.status(500).json({ message: 'Authentication failed', error: error.message });
+      console.error(error);
+      res.status(500).json({ success: false, message: "Authentication failed.", error: error.message });
     }
-  }
+  },
 };
-
-module.exports = authController;

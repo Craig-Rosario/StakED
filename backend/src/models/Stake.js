@@ -1,47 +1,57 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const stakeSchema = new mongoose.Schema({
-  student: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const stakeSchema = new mongoose.Schema(
+  {
+    stakeId: {
+      type: Number,
+      required: true,
+      unique: true,
+    },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    class: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      required: true,
+    },
+    stakeAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    targetThreshold: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+    },
+    actualScore: {
+      type: Number,
+      default: null,
+    },
+    isWinner: {
+      type: Boolean,
+      default: null,
+    },
+    rewardAmount: {
+      type: Number,
+      default: 0,
+    },
+    isClaimed: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "verified", "failed", "paid"],
+      default: "pending",
+    },
   },
-  exam: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Exam',
-    required: true
-  },
-  stakeAmount: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  targetThreshold: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 100
-  },
-  actualScore: {
-    type: Number,
-    default: null,
-    min: 0,
-    max: 100
-  },
-  isWinner: {
-    type: Boolean,
-    default: null
-  },
-  rewardAmount: {
-    type: Number,
-    default: 0
-  },
-  isClaimed: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
-});
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Stake', stakeSchema);
+const Stake = mongoose.model("Stake", stakeSchema);
+export default Stake;

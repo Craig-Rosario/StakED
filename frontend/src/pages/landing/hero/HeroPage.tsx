@@ -2,23 +2,41 @@ import { Button } from "@/components/ui/button";
 import { TextAnimate } from "@/components/ui/text-animate";
 import { motion } from "framer-motion";
 import Scroller from "../Scroller/Scroller";
+import { loginWithMetaMask } from "@/lib/web3Auth";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 
 const HeroPage = () => {
-  const handleNavigate = (page: string) => {
-    console.log(`Navigate to: ${page}`);
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const navigate = useNavigate(); 
+
+  const handleMetaMaskLogin = async () => {
+    try {
+      setLoading(true);
+      const loggedUser = await loginWithMetaMask();
+      setUser(loggedUser);
+
+      navigate("/user/dashboard");
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "MetaMask login failed");
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <section
       id="home"
-      className="min-h-screen bg-[#F9F9F9] border-b-4 border-foreground flex flex-col items-center overflow-x-hidden" 
+      className="min-h-screen bg-[#F9F9F9] border-b-4 border-foreground flex flex-col items-center overflow-x-hidden"
     >
       <div className="w-full flex-shrink-0">
         <Scroller />
       </div>
 
       <div className="flex flex-col items-center justify-center w-full flex-grow pb-10 sm:pb-16 px-4 sm:px-8 text-center">
-
         <h1 className="text-5xl sm:text-6xl md:text-6xl lg:text-8xl font-black uppercase tracking-tighter mb-6 sm:mb-8 text-foreground leading-tight break-words">
           <div className="flex flex-wrap justify-center gap-2">
             <TextAnimate animation="blurInUp" by="word" className="m-0 text-red-500" once>
@@ -51,10 +69,11 @@ const HeroPage = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
           <Button
-           className="bg-gray-800 text-white font-extrabold text-lg px-8 py-4 border-4 border-black shadow-[6px_6px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none cursor-pointer"
-            onClick={() => handleNavigate("market")}
+            className="bg-gray-800 text-white font-extrabold text-lg px-8 py-4 border-4 border-black shadow-[6px_6px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none cursor-pointer"
+            onClick={handleMetaMaskLogin}
+            disabled={loading}
           >
-            🦊 CONNECT WALLET (METAMASK)
+            {loading ? "Connecting..." : "🦊 CONNECT WALLET (METAMASK)"}
           </Button>
         </motion.div>
       </div>

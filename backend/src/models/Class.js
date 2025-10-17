@@ -1,41 +1,45 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
-const classSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true
+const classSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+    },
+    teacher: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    verifier: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    students: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    rewardPool: {
+      type: Number,
+      default: 0,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  section: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  classCode: {
-    type: String,
-    required: true,
-    unique: true,
-    uppercase: true
-  },
-  verifier: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  students: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  exams: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Exam'
-  }],
-  isActive: {
-    type: Boolean,
-    default: true
-  }
-}, {
-  timestamps: true
-});
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Class', classSchema);
+const Class = mongoose.model("Class", classSchema);
+export default Class;
