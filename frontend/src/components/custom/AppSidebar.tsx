@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -14,11 +14,48 @@ import {
 
 import { ChartLine, CalendarDays, LogOut, Users, User } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+
 export const AppSidebar = () => {
   const [activeTab, setActiveTab] = useState<
     "dashboard" | "upcomingTest" | "classmates"
   >("dashboard");
+  const [userName, setUserName] = useState("Student");
+  const [userAddress, setUserAddress] = useState("0x00...000");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE}/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserName(data.user.username || "Student");
+        
+        // Use actual wallet address from user data
+        if (data.user.walletAddress) {
+          // Format the address to show first 4 and last 3 characters
+          const formatted = `${data.user.walletAddress.slice(0, 6)}...${data.user.walletAddress.slice(-3)}`;
+          setUserAddress(formatted);
+        } else {
+          setUserAddress("No wallet connected");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
 
   const handleNavigate = (tab: string, route: string) => {
     setActiveTab(tab);
@@ -26,6 +63,7 @@ export const AppSidebar = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
     window.location.href = "http://localhost:5173";
   };
 
@@ -37,8 +75,8 @@ export const AppSidebar = () => {
             <User className="w-5 h-5 text-gray-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-extrabold text-sm text-gray-800 truncate">Pangli Peryl</h3>
-            <p className="text-xs font-mono text-gray-600 truncate">0x13...7A9</p>
+            <h3 className="font-extrabold text-sm text-gray-800 truncate">{userName}</h3>
+            <p className="text-xs font-mono text-gray-600 truncate">{userAddress}</p>
           </div>
         </div>
         
