@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000/api/auth";
+const API_BASE = import.meta.env.VITE_API_AUTH_URL || "http://localhost:4000/api/auth";
 
 declare global {
   interface Window {
@@ -32,11 +32,9 @@ export const loginWithMetaMask = async () => {
 
     const { token, user } = verifyRes.data;
     localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-
     return user;
-  } catch (err: any) {
-    console.error("MetaMask login failed:", err.response?.data || err.message);
-    throw new Error(err.response?.data?.message || "Login failed");
+  } catch (error: any) {
+    console.error("MetaMask login failed:", error.response?.data?.message || error.message);
+    throw new Error("Login failed");
   }
 };

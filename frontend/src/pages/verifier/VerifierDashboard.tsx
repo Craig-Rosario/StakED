@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { User, Wallet, Award } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 const VerifierDashboard = () => {
   const [stats, setStats] = useState({
