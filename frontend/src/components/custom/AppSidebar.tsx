@@ -20,7 +20,7 @@ export const AppSidebar = () => {
   >("dashboard");
   const navigate = useNavigate();
 
-  const handleNavigate = (tab: typeof activeTab, route: string) => {
+  const handleNavigate = (tab: string, route: string) => {
     setActiveTab(tab);
     navigate(route);
   };
