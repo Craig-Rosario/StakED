@@ -1,39 +1,28 @@
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 
-export const verifyToken = async (req, res, next) => {
+export const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ success: false, message: "Access denied. No token provided." });
+  }
+
+  const token = authHeader.substring(7);
+
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded.userId).select("-nonce");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    req.user = { userId: user._id, role: user.role };
+    req.user = decoded;
     next();
-  } catch (err) {
-    console.error("Token verification error:", err);
-    res.status(403).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Invalid token." });
   }
 };
 
-export const checkRole = (roles = []) => {
+export const checkRole = (allowedRoles) => {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ message: "User not authenticated" });
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "Access denied. Insufficient permissions." });
     }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Access denied: insufficient role" });
-    }
-
     next();
   };
 };

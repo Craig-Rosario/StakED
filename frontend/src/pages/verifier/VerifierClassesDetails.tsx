@@ -74,9 +74,9 @@ const VerifierClassesDetails = () => {
   const handleCreateExam = async () => {
     try {
       const token = localStorage.getItem("token");
-
+      
       if (!examForm.name || !examForm.examDate) {
-        alert("Please fill in Exam Title and Exam Date.");
+        alert("Please fill in all required fields");
         return;
       }
 
@@ -84,7 +84,7 @@ const VerifierClassesDetails = () => {
       const defaultStake = new Date(examDateLocal.getTime() - 24 * 60 * 60 * 1000);
       defaultStake.setHours(23, 59, 0, 0);
 
-      const commit = examForm.commitDeadline
+      const commit = examForm.commitDeadline 
         ? new Date(examForm.commitDeadline)
         : new Date(examDateLocal.getTime() + 2 * 24 * 60 * 60 * 1000);
 
@@ -92,52 +92,34 @@ const VerifierClassesDetails = () => {
         ? new Date(examForm.revealDeadline)
         : new Date(examDateLocal.getTime() + 4 * 24 * 60 * 60 * 1000);
 
-      const stake = examForm.stakeDeadline
-        ? new Date(examForm.stakeDeadline)
-        : defaultStake;
-
-      const body = {
-        name: examForm.name,
-        description: examForm.description,
-        maxMarks: Number(examForm.maxMarks) || 100,
-        examDate: toISO(examDateLocal),
-        stakeDeadline: toISO(stake),
-        commitDeadline: toISO(commit),
-        revealDeadline: toISO(reveal),
-      };
-
-      console.log("POST body ->", body);
-
-      const res = await fetch(`${API_BASE}/classes/${classId}/exams`, {
+      const response = await fetch(`${API_BASE}/classes/${classId}/exams`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          name: examForm.name,
+          description: examForm.description,
+          maxMarks: Number(examForm.maxMarks),
+          examDate: toISO(examForm.examDate),
+          stakeDeadline: toISO(defaultStake),
+          commitDeadline: toISO(commit),
+          revealDeadline: toISO(reveal),
+        }),
       });
 
-      const data = await res.json();
-      console.log("POST /exams response ->", data);
+      const data = await response.json();
 
-      if (res.ok && data.success) {
-        setExams((prev) => [data.exam, ...prev]);
-        alert("✅ Exam created successfully!");
-        setExamForm({
-          name: "",
-          description: "",
-          examDate: "",
-          stakeDeadline: "",
-          commitDeadline: "",
-          revealDeadline: "",
-          maxMarks: 100,
-        });
+      if (response.ok) {
+        alert("Exam created successfully!");
+        window.location.reload();
       } else {
-        alert(`⚠️ ${data.message || "Failed to create exam"}`);
+        alert(`Error: ${data.message}`);
       }
     } catch (err) {
       console.error("Error creating exam:", err);
-      alert("Unexpected error creating exam. Check console for details.");
+      alert("Error creating exam");
     }
   };
 

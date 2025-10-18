@@ -13,6 +13,7 @@ const classSchema = new mongoose.Schema(
       unique: true,
       uppercase: true,
       trim: true,
+      // Removed index: true to avoid duplicate index warning
     },
     description: {
       type: String,
@@ -43,7 +44,9 @@ const classSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Create indexes
 classSchema.index({ code: 1 }, { unique: true });
+classSchema.index({ verifier: 1 });
 
 const Class = mongoose.model("Class", classSchema);
 export default Class;

@@ -10,6 +10,7 @@ const examSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
+      default: "",
     },
     classId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,9 +61,46 @@ const examSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    stakes: [
+      {
+        student: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        amount: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        predictedGrade: {
+          type: Number,
+          min: 0,
+          max: 100,
+        },
+        commitHash: String,
+        actualGrade: {
+          type: Number,
+          min: 0,
+        },
+        reward: {
+          type: Number,
+          default: 0,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
+
+// Add indexes for better performance
+examSchema.index({ classId: 1, examDate: 1 });
+examSchema.index({ verifier: 1 });
+examSchema.index({ status: 1 });
 
 const Exam = mongoose.model("Exam", examSchema);
 export default Exam;
