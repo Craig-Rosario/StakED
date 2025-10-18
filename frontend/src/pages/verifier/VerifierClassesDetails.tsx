@@ -19,10 +19,9 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 const VerifierClassesDetails = () => {
   const navigate = useNavigate();
-  const { classId } = useParams();
+  const { id } = useParams();
   const [activeTab, setActiveTab] = useState("students");
 
-  // State
   const [students, setStudents] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +29,8 @@ const VerifierClassesDetails = () => {
   const [examForm, setExamForm] = useState({
     name: "",
     description: "",
-    examDate: "",      
-    stakeDeadline: "", 
+    examDate: "",
+    stakeDeadline: "",
     commitDeadline: "",
     revealDeadline: "",
     maxMarks: 100 as number | string,
@@ -39,9 +38,14 @@ const VerifierClassesDetails = () => {
 
   useEffect(() => {
     const fetchClassDetails = async () => {
+      if (!id) {
+        console.error("Missing class ID in URL");
+        return;
+      }
+
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${API_BASE}/classes/${classId}`, {
+        const res = await fetch(`${API_BASE}/classes/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -62,7 +66,7 @@ const VerifierClassesDetails = () => {
     };
 
     fetchClassDetails();
-  }, [classId]);
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setExamForm({ ...examForm, [e.target.name]: e.target.value });
@@ -74,17 +78,17 @@ const VerifierClassesDetails = () => {
   const handleCreateExam = async () => {
     try {
       const token = localStorage.getItem("token");
-      
+
       if (!examForm.name || !examForm.examDate) {
         alert("Please fill in all required fields");
         return;
       }
 
-      const examDateLocal = new Date(examForm.examDate); 
+      const examDateLocal = new Date(examForm.examDate);
       const defaultStake = new Date(examDateLocal.getTime() - 24 * 60 * 60 * 1000);
       defaultStake.setHours(23, 59, 0, 0);
 
-      const commit = examForm.commitDeadline 
+      const commit = examForm.commitDeadline
         ? new Date(examForm.commitDeadline)
         : new Date(examDateLocal.getTime() + 2 * 24 * 60 * 60 * 1000);
 
@@ -92,7 +96,7 @@ const VerifierClassesDetails = () => {
         ? new Date(examForm.revealDeadline)
         : new Date(examDateLocal.getTime() + 4 * 24 * 60 * 60 * 1000);
 
-      const response = await fetch(`${API_BASE}/classes/${classId}/exams`, {
+      const response = await fetch(`${API_BASE}/classes/${id}/exams`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -305,11 +309,15 @@ const VerifierClassesDetails = () => {
                     <div className="space-y-2 text-sm font-bold mb-3">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Exam Date</span>
-                        <span className="text-[#00A2FF]">{new Date(exam.examDate).toLocaleDateString()}</span>
+                        <span className="text-[#00A2FF]">
+                          {new Date(exam.examDate).toLocaleDateString()}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Status</span>
-                        <span className="text-[#00FF99] capitalize">{exam.status || "upcoming"}</span>
+                        <span className="text-[#00FF99] capitalize">
+                          {exam.status || "upcoming"}
+                        </span>
                       </div>
                     </div>
                   </div>

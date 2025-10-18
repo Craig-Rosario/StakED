@@ -16,9 +16,9 @@ router.get("/profile", verifyToken, async (req, res) => {
       .lean();
 
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
       });
     }
 
@@ -28,9 +28,9 @@ router.get("/profile", verifyToken, async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching user profile:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: "Error fetching profile" 
+    res.status(500).json({
+      success: false,
+      message: "Error fetching profile",
     });
   }
 });
@@ -47,20 +47,20 @@ router.put("/profile", verifyToken, async (req, res) => {
     if (!username || !username.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Username is required"
+        message: "Username is required",
       });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.userId,
       { username: username.trim() },
-      { new: true, select: "username walletAddress role createdAt" }
-    );
+      { new: true } 
+    ).select("username walletAddress role createdAt"); 
 
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -73,7 +73,7 @@ router.put("/profile", verifyToken, async (req, res) => {
     console.error("Error updating user profile:", err);
     res.status(500).json({
       success: false,
-      message: "Error updating profile"
+      message: "Error updating profile",
     });
   }
 });
