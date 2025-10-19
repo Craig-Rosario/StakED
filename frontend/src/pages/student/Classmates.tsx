@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import LeaderboardCard from "@/components/custom/LeaderboardCard";
 import { NeoButton } from "@/components/custom/NeoButton";
 import { Trophy, Medal, Award } from "lucide-react";
@@ -10,6 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import PerformanceDashboard from "@/components/custom/PerformanceDialog";
 import StakeDialogContent from "@/components/custom/StakeDialogContent"; 
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+
+interface Exam {
+  _id: string;
+  name: string;
+  examDate: string;
+  stakeDeadline: string;
+  canStake: boolean;
+} 
 
 const mockStudents = [
   {
@@ -123,8 +134,56 @@ const mockStudents = [
 ];
 
 const Classmates = () => {
+  const [availableExams, setAvailableExams] = useState<Exam[]>([]);
+  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [showExamSelection, setShowExamSelection] = useState(false);
+  const [showStakeDialog, setShowStakeDialog] = useState(false);
+
   const topStudents = mockStudents.slice(0, 3);
   const otherStudents = mockStudents.slice(3);
+
+  useEffect(() => {
+    fetchAvailableExams();
+  }, []);
+
+  const fetchAvailableExams = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE}/classes/student/exams`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const stakableExams = (data.exams || []).filter((exam: Exam) => 
+          exam.canStake && new Date(exam.stakeDeadline) > new Date()
+        );
+        setAvailableExams(stakableExams);
+      }
+    } catch (error) {
+      console.error("Error fetching available exams:", error);
+    }
+  };
+
+  const handleStakeClick = (student: any) => {
+    setSelectedStudent(student);
+    setShowExamSelection(true);
+  };
+
+  const handleExamSelect = (exam: Exam) => {
+    setSelectedExam(exam);
+    setShowExamSelection(false);
+    setShowStakeDialog(true);
+  };
+
+  const closeStakeDialog = () => {
+    setShowStakeDialog(false);
+    setSelectedExam(null);
+    setSelectedStudent(null);
+  };
 
   const podiumData = [
     {
@@ -256,21 +315,90 @@ const Classmates = () => {
                   </DialogContent>
                 </Dialog>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <NeoButton className="flex-1 bg-red-500 py-3 text-base text-white cursor-pointer">
-                      STAKE
-                    </NeoButton>
-                  </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
-                    <StakeDialogContent stakeTargetName={student.name} isSelfStake={false} />
-                  </DialogContent>
-                </Dialog>
+                <NeoButton 
+                  className="flex-1 bg-red-500 py-3 text-base text-white cursor-pointer"
+                  onClick={() => handleStakeClick(student)}
+                >
+                  STAKE
+                </NeoButton>
               </div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* Exam Selection Dialog */}
+      <Dialog open={showExamSelection} onOpenChange={setShowExamSelection}>
+        <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              Select Exam to Stake On
+            </DialogTitle>
+          </DialogHeader>
+          
+          {availableExams.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600 mb-4">No stakable exams available</p>
+              <NeoButton 
+                className="bg-gray-500 text-white px-6 py-2"
+                onClick={() => setShowExamSelection(false)}
+              >
+                Close
+              </NeoButton>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Choose an exam to stake on {selectedStudent?.name}:
+              </p>
+              
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {availableExams.map((exam) => (
+                  <div
+                    key={exam._id}
+                    onClick={() => handleExamSelect(exam)}
+                    className="border-2 border-black p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <h4 className="font-bold">{exam.name}</h4>
+                    <p className="text-sm text-gray-600">
+                      Exam: {new Date(exam.examDate).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Stake Deadline: {new Date(exam.stakeDeadline).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              <NeoButton 
+                className="w-full bg-gray-500 text-white py-2"
+                onClick={() => setShowExamSelection(false)}
+              >
+                Cancel
+              </NeoButton>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Stake Dialog */}
+      <Dialog open={showStakeDialog} onOpenChange={(open) => !open && closeStakeDialog()}>
+        <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
+          {selectedExam && selectedStudent && (
+            <StakeDialogContent
+              stakeTargetName={selectedStudent.name}
+              isSelfStake={false}
+              examId={selectedExam._id}
+              candidateAddress={selectedStudent.address}
+              onClose={closeStakeDialog}
+              onStakeSuccess={() => {
+                closeStakeDialog();
+                // Could refresh data here if needed
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

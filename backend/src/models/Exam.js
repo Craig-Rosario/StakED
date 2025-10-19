@@ -50,7 +50,7 @@ const examSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["upcoming", "staking", "grading", "revealed", "completed"],
+      enum: ["upcoming", "staking", "grading", "graded", "revealed", "completed"],
       default: "upcoming",
     },
     commitHash: {
@@ -60,6 +60,10 @@ const examSchema = new mongoose.Schema(
     gradesRevealed: {
       type: Boolean,
       default: false,
+    },
+    gradedAt: {
+      type: Date,
+      default: null,
     },
     stakes: [
       {

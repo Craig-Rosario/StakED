@@ -17,10 +17,30 @@ const stakeSchema = new mongoose.Schema(
       ref: "Class",
       required: true,
     },
+    exam: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Exam",
+      required: true,
+    },
+    candidateAddress: {
+      type: String,
+      required: true,
+    },
     stakeAmount: {
       type: Number,
       required: true,
       min: 0,
+    },
+    confidence: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+    },
+    isSelfStake: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
     targetThreshold: {
       type: Number,

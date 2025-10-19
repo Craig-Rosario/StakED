@@ -332,6 +332,12 @@ export default function UpcomingTestsDashboard() {
             stakeTargetName={selectedExam?.name || 'this exam'} 
             isSelfStake={true}
             examId={selectedExam?._id}
+            candidateAddress="self" // Will be resolved to current user in component
+            onClose={closeStakeModal}
+            onStakeSuccess={() => {
+              closeStakeModal();
+              fetchExams(); // Refresh exam data
+            }}
           />
         </DialogContent>
       </Dialog>

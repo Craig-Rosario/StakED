@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import GradingDialog from "@/components/custom/GradingDialog";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -25,6 +26,10 @@ const VerifierClassesDetails = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Grading dialog state
+  const [selectedExam, setSelectedExam] = useState<any>(null);
+  const [showGradingDialog, setShowGradingDialog] = useState(false);
 
   const [examForm, setExamForm] = useState({
     name: "",
@@ -125,6 +130,16 @@ const VerifierClassesDetails = () => {
       console.error("Error creating exam:", err);
       alert("Error creating exam");
     }
+  };
+
+  const handleGradeExam = (exam: any) => {
+    setSelectedExam(exam);
+    setShowGradingDialog(true);
+  };
+
+  const closeGradingDialog = () => {
+    setShowGradingDialog(false);
+    setSelectedExam(null);
   };
 
   if (loading) {
@@ -323,7 +338,10 @@ const VerifierClassesDetails = () => {
                   </div>
 
                   <div className="flex justify-between mt-3">
-                    <Button className="bg-[#00FF99] text-black px-4 py-2 text-xs sm:text-sm font-bold cursor-pointer rounded-md w-full sm:w-auto">
+                    <Button 
+                      onClick={() => handleGradeExam(exam)}
+                      className="bg-[#00FF99] text-black px-4 py-2 text-xs sm:text-sm font-bold cursor-pointer rounded-md w-full sm:w-auto"
+                    >
                       Grade
                     </Button>
                   </div>
@@ -335,6 +353,24 @@ const VerifierClassesDetails = () => {
           </section>
         </TabsContent>
       </Tabs>
+
+      {/* Grading Dialog */}
+      <Dialog open={showGradingDialog} onOpenChange={setShowGradingDialog}>
+        <DialogContent className="w-[95vw] max-w-2xl bg-white border-4 border-black shadow-[8px_8px_0px_#000] p-6 rounded-lg">
+          {selectedExam && (
+            <GradingDialog
+              examId={selectedExam._id}
+              examName={selectedExam.name}
+              students={students}
+              onClose={closeGradingDialog}
+              onGraded={() => {
+                closeGradingDialog();
+                // Could refresh data here if needed
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

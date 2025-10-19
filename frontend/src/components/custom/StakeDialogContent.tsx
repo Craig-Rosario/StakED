@@ -1,20 +1,66 @@
 import React, { useState } from 'react';
-import { NeoButton } from '@/components/custom/NeoButton';
 import { Button } from '../ui/button';
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 interface StakeDialogContentProps {
   stakeTargetName: string;
   isSelfStake?: boolean;
   onClose?: () => void;
+  examId?: string;
+  candidateAddress?: string;
+  onStakeSuccess?: () => void;
 }
 
-const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName, isSelfStake = false, onClose }) => {
+const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ 
+  stakeTargetName, 
+  isSelfStake = false, 
+  onClose,
+  examId,
+  candidateAddress,
+  onStakeSuccess
+}) => {
   const [confidence, setConfidence] = useState(50);
   const [stakeAmount, setStakeAmount] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleStakeSubmit = (e: React.FormEvent) => {
+  const handleStakeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Staking ${stakeAmount} ETH on ${stakeTargetName} with predicted score of ${confidence}%.`);
+    
+    try {
+      setIsLoading(true);
+      
+      // Call backend API to record the stake
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/stakes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          examId,
+          candidateAddress,
+          stakeAmount,
+          confidence,
+          isSelfStake
+        })
+      });
+
+      if (response.ok) {
+        alert(`Successfully staked ${stakeAmount} PYUSD on ${stakeTargetName}!`);
+        onStakeSuccess?.();
+        onClose?.();
+      } else {
+        const error = await response.json();
+        alert(`Failed to place stake: ${error.message}`);
+      }
+    } catch (err) {
+      console.error('Stake submission failed:', err);
+      alert('Failed to place stake. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const scoreLabel = isSelfStake
@@ -53,7 +99,7 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName
         
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            Amount to Stake (ETH)
+            Amount to Stake (PYUSD)
           </label>
           <input
             type="number"
@@ -67,9 +113,10 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({ stakeTargetName
         
         <Button
           type="submit"
-          className="w-full py-4 text-xl bg-red-500 text-white cursor-pointer"
+          disabled={isLoading}
+          className="w-full py-4 text-xl bg-red-500 text-white cursor-pointer disabled:bg-gray-400"
         >
-          CONFIRM STAKE
+          {isLoading ? 'PLACING STAKE...' : 'CONFIRM STAKE'}
         </Button>
       </form>
     </div>
