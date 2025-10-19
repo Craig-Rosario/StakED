@@ -8,7 +8,7 @@ async function main() {
 
   console.log("Creating test exam for frontend...");
 
-  const EXAM_STAKING_ADDRESS = "0xf87A667f85e5CFB406cb5851Ecf6e92Dec7929ad";
+  const EXAM_STAKING_ADDRESS = "0x1E4731390cce9955BC21985BB45068A1858703C2";
   
   const abi = [
     "function createExam(bytes32 examId, address verifier, address[] candidates, uint64 stakeDeadline, uint16 feeBps) external",

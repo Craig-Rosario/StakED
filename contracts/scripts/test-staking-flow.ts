@@ -9,7 +9,7 @@ async function main() {
   console.log("🧪 Testing Complete Staking Flow with New Reward Rules");
   console.log("====================================================");
   
-  const examStakingAddress = "0xEe41CA98C7E2f2050127111edf3bac094dE24029";
+  const examStakingAddress = "0x1E4731390cce9955BC21985BB45068A1858703C2";
   const pyusdAddress = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9";
   const examId = "two-student-final";
   const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(examId));

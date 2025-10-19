@@ -6,7 +6,7 @@ async function main() {
   const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL!);
   const wallet = new ethers.Wallet(process.env.SEPOLIA_PRIVATE_KEY!, provider);
 
-  const StudentRegistryAddress = "0x5d035D127639bCDD840e9285BcdFd4505CC136EE"; 
+  const StudentRegistryAddress = "0x0fd1373be62e1E197268aaFd505201db41d102Bd"; 
   const studentABI = [
     "function registerStudent(address student) external",
     "function isRegistered(address student) view returns (bool)",

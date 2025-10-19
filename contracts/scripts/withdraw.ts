@@ -12,7 +12,7 @@ async function main() {
 
   const EXAM_ID = ethers.keccak256(ethers.toUtf8Bytes("test-exam-1"));
   
-  const EXAM_STAKING_ADDRESS = "0x1272B3e63A4309Ac881C09df31EcDf3873708E88"; 
+  const EXAM_STAKING_ADDRESS = "0x1E4731390cce9955BC21985BB45068A1858703C2"; 
   
   const ExamStakingArtifact = await hre.artifacts.readArtifact("ExamStaking");
   const examStaking = new ethers.Contract(EXAM_STAKING_ADDRESS, ExamStakingArtifact.abi, wallet);

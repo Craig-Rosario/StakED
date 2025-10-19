@@ -28,7 +28,7 @@ interface StakeDialogProps {
 }
 
 const PYUSD_ADDRESS = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9"; 
-const EXAM_STAKING_ADDRESS = "0x5b17C99966079491e581e6E39BF67722E5327AD8"; 
+const EXAM_STAKING_ADDRESS = "0x1E4731390cce9955BC21985BB45068A1858703C2"; 
 
 const PYUSD_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",

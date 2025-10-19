@@ -177,18 +177,33 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
 
         address[] memory winners = _getWinners(e);
         
-        // Case 1: Everyone wins - but handle single participant specially
+        // Case 1: Everyone wins - handle single participant properly  
         if (winners.length == e.candidates.length) {
-            // Special case: Single participant who wins gets nothing (per new requirement)
+            // Single participant who wins gets their stake back
             if (e.candidates.length == 1) {
-                // Single participant - all stakes go to staked bank regardless of win/loss
-                uint256 totalAmount = e.totalStake;
-                if (totalAmount > 0) {
-                    address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
-                    pyusd.safeTransfer(stakedBank, totalAmount);
-                    e.totalStake = 0;
+                uint256 userStake = _getTotalUserStake(e, msg.sender);
+                require(userStake > 0, "No stake to claim");
+                
+                // Check if user is a winner
+                bool isUserWinner = false;
+                for (uint256 i = 0; i < e.candidates.length; i++) {
+                    if (e.candidates[i] == msg.sender && e.isWinner[msg.sender]) {
+                        isUserWinner = true;
+                        break;
+                    }
                 }
-                revert("Single participant stakes go to staked bank");
+                
+                if (isUserWinner) {
+                    // Winner gets their stake back
+                    pyusd.safeTransfer(msg.sender, userStake);
+                    emit Claimed(examId, msg.sender, userStake);
+                    return;
+                } else {
+                    // Loser gets nothing, stake goes to staked bank
+                    address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
+                    pyusd.safeTransfer(stakedBank, userStake);
+                    revert("Single participant failed, stake sent to staked bank");
+                }
             }
             
             // Multiple participants who all win - they get their stakes back
@@ -249,23 +264,9 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
         
         // Special case: If everyone wins, handle single participant differently
         if (winners.length == e.candidates.length) {
-            // Single participant case - all stakes go to staked bank regardless of win/loss
+            // Single participant case - let them claim their stake back if they won
             if (e.candidates.length == 1) {
-                uint256 totalAmount = e.totalStake;
-                if (totalAmount > 0) {
-                    pyusd.safeTransfer(stakedBank, totalAmount);
-                    e.totalStake = 0;
-                    // Mark stake as claimed so no one can claim later
-                    address candidate = e.candidates[0];
-                    for (uint256 j = 0; j < e.candidates.length; j++) {
-                        address staker = e.candidates[j];
-                        if (e.stakeOf[staker][candidate] > 0) {
-                            e.hasClaimed[staker] = true;
-                            e.stakeOf[staker][candidate] = 0;
-                        }
-                    }
-                    e.totalOnCandidate[candidate] = 0;
-                }
+                // Just mark as finalized, let user claim normally
                 e.finalized = true;
                 emit ExamFinalized(examId, winners);
                 return;
@@ -279,7 +280,14 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
         
         // Special case: If nobody wins, all stakes go to staked bank
         if (winners.length == 0) {
-            // Transfer all stakes to staked bank
+            // For single participants, let them handle it in claim() function
+            if (e.candidates.length == 1) {
+                e.finalized = true;
+                emit ExamFinalized(examId, winners);
+                return;
+            }
+            
+            // For multiple participants, transfer all stakes to staked bank
             uint256 totalAmount = e.totalStake;
             if (totalAmount > 0) {
                 pyusd.safeTransfer(stakedBank, totalAmount);

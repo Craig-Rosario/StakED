@@ -10,7 +10,7 @@ async function main() {
   console.log("💎 Quick Claim Your PYUSD Rewards!");
   console.log("==================================");
   
-  const examStakingAddress = "0x183d22182C5190b1E4df90527B05050d026fFce9";
+  const examStakingAddress = "0x1E4731390cce9955BC21985BB45068A1858703C2";
   const pyusdAddress = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9";
   
   const userAddress = await wallet.getAddress();

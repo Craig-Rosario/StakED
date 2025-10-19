@@ -8,7 +8,7 @@ async function main() {
 
   console.log("Using wallet:", await wallet.getAddress());
 
-  const ExamStakingAddress = "0x2203570a2e3c9831d2EEdcbFB5dEC6F23C36fC0A"; 
+  const ExamStakingAddress = "0x1E4731390cce9955BC21985BB45068A1858703C2"; 
   const PYUSD_ADDRESS = process.env.PYUSD_ADDRESS!;
 
   const ERC20_ABI = [
@@ -25,8 +25,8 @@ async function main() {
   const staking = new ethers.Contract(ExamStakingAddress, examABI, wallet);
 
   const examId = ethers.keccak256(ethers.toUtf8Bytes("test-exam-1"));
-  const candidate = process.env.TEST_STUDENT!;
-  const amount = ethers.parseUnits("1", 18); 
+  const candidate = process.env.TEST_STUDENT || "0x6D41680267986408E5e7c175Ee0622cA931859A4"; // Default to main wallet
+  const amount = ethers.parseUnits("1", 6); // 1 PYUSD (6 decimals) 
 
   console.log("Approving ExamStaking contract...");
   await (await pyusd.approve(ExamStakingAddress, amount)).wait();

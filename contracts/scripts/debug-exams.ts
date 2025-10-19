@@ -11,9 +11,9 @@ async function main() {
   console.log("Connected with:", await wallet.getAddress());
 
   // Use the current deployed contract address
-  const EXAM_STAKING_ADDRESS = "0xf87A667f85e5CFB406cb5851Ecf6e92Dec7929ad";
-  const STUDENT_REGISTRY_ADDRESS = "0x63bA70B9051dB79F68CFb513f6c7AB633B609476";
-  const VERIFIER_REGISTRY_ADDRESS = "0xea9DA664E4282B0ca32C14c154B28850d7b1bf51";
+  const EXAM_STAKING_ADDRESS = "0x1E4731390cce9955BC21985BB45068A1858703C2";
+  const STUDENT_REGISTRY_ADDRESS = "0x0fd1373be62e1E197268aaFd505201db41d102Bd";
+  const VERIFIER_REGISTRY_ADDRESS = "0xb079ca589DAd234cBF3A9Ae8e82E4132c0E20CF7";
 
   const ExamStakingArtifact = await hre.artifacts.readArtifact("ExamStaking");
   const examStaking = new ethers.Contract(EXAM_STAKING_ADDRESS, ExamStakingArtifact.abi, wallet);
