@@ -13,15 +13,6 @@ interface UserStats {
   upcomingExams: number;
 }
 
-interface RecentActivity {
-  _id: string;
-  type: string;
-  description: string;
-  amount?: number;
-  date: string;
-  status: string;
-}
-
 interface Class {
   _id: string;
   name: string;
@@ -41,12 +32,12 @@ interface ClaimableStake {
   rewardAmount: number;
   predictedMarks: number;
   actualMarks: number;
-  exam: {
+  exam?: {
     _id: string;
     name: string;
     maxMarks: number;
   };
-  class: {
+  class?: {
     name: string;
     code: string;
   };
@@ -62,7 +53,6 @@ export default function StudentDashboard() {
     classesJoined: 0,
     upcomingExams: 0,
   });
-  const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
   const [claimableStakes, setClaimableStakes] = useState<ClaimableStake[]>([]);
   const [loading, setLoading] = useState(true);
@@ -437,13 +427,13 @@ export default function StudentDashboard() {
                 {claimableStakes.map((stake) => (
                   <div key={stake._id} className="bg-white border-2 border-black p-4 flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">{stake.exam.name}</h3>
+                      <h3 className="font-bold text-gray-800">{stake.exam?.name || 'Unknown Exam'}</h3>
                       <p className="text-sm text-gray-600">
-                        Class: {stake.class.name} ({stake.class.code})
+                        Class: {stake.class?.name || 'Unknown Class'} ({stake.class?.code || 'N/A'})
                       </p>
                       <p className="text-xs text-gray-500 font-mono">
-                        Predicted: {stake.predictedMarks}/{stake.exam.maxMarks} | 
-                        Actual: {stake.actualMarks}/{stake.exam.maxMarks} | 
+                        Predicted: {stake.predictedMarks}/{stake.exam?.maxMarks || 100} | 
+                        Actual: {stake.actualMarks}/{stake.exam?.maxMarks || 100} | 
                         Staked: {stake.stakeAmount} PYUSD
                       </p>
                     </div>
@@ -452,11 +442,11 @@ export default function StudentDashboard() {
                         💰 {stake.rewardAmount} PYUSD
                       </div>
                       <button
-                        onClick={() => handleClaimReward(stake.exam._id)}
-                        disabled={claiming === stake.exam._id}
+                        onClick={() => stake.exam?._id && handleClaimReward(stake.exam._id)}
+                        disabled={claiming === stake.exam?._id || !stake.exam?._id}
                         className="mt-2 px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {claiming === stake.exam._id ? "CLAIMING..." : "CLAIM REWARD"}
+                        {claiming === stake.exam?._id ? "CLAIMING..." : "CLAIM REWARD"}
                       </button>
                     </div>
                   </div>
@@ -581,37 +571,14 @@ export default function StudentDashboard() {
               Recent Activity
             </h2>
             
-            {activities.length === 0 ? (
-              <div className="text-center py-8">
-                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 font-mono mb-2">No recent activity</p>
-                <p className="text-gray-400 text-sm">
-                  Start staking on exams to see your activity here
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {activities.map((activity) => (
-                  <div key={activity._id} className="border-2 border-gray-300 p-3 bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-bold text-gray-800 text-sm">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs font-mono text-gray-500 mt-1">
-                          {new Date(activity.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {activity.amount && (
-                        <span className="text-sm font-bold text-green-600">
-                          +{activity.amount} ETH
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* No recent activities for now */}
+            <div className="text-center py-8">
+              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 font-mono mb-2">No recent activity</p>
+              <p className="text-gray-400 text-sm">
+                Start staking on exams to see your activity here
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -78,9 +78,9 @@ const examSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    contractAddress: {
+    examStakingAddress: {
       type: String,
-      default: "0x183d22182C5190b1E4df90527B05050d026fFce9", // Multi-verifier contract deployment
+      default: "0x5b17C99966079491e581e6E39BF67722E5327AD8", // Updated contract with new loss distribution logic
     },
     feeBps: {
       type: Number,

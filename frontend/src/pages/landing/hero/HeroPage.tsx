@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 
 const HeroPage = () => {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  // const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   const handleMetaMaskLogin = async () => {
@@ -16,7 +16,7 @@ const HeroPage = () => {
       setLoading(true);
 
       const loggedUser = await loginWithMetaMask(); 
-      setUser(loggedUser);
+      // setUser(loggedUser);
 
       if (loggedUser?.role === "verifier") {
         navigate("/verifier/dashboard");

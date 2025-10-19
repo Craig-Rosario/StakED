@@ -10,7 +10,7 @@ const EXAM_STAKING_ABI = [
         "type": "bytes32"
       }
     ],
-    "name": "claimRewards",
+    "name": "claim",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -24,26 +24,99 @@ const EXAM_STAKING_ABI = [
       },
       {
         "internalType": "address",
-        "name": "student",
+        "name": "staker",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
         "type": "address"
       }
     ],
-    "name": "stakes",
+    "name": "stakeOf",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "examId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "staker",
+        "type": "address"
+      }
+    ],
+    "name": "hasClaimed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "examId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getExam",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "verifier",
+        "type": "address"
+      },
+      {
+        "internalType": "uint64",
+        "name": "stakeDeadline",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bool",
+        "name": "finalized",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "canceled",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint16",
+        "name": "feeBps",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalStake",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "predictedMarks",
+        "name": "protocolFee",
         "type": "uint256"
       },
       {
-        "internalType": "bool",
-        "name": "claimed",
-        "type": "bool"
+        "internalType": "address[]",
+        "name": "candidates",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -85,23 +158,36 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
       setStatus('Checking stake on blockchain...');
       
       try {
-        const stake = await contract.stakes(examIdBytes32, userAddress);
-        setStatus(`Found stake: ${ethers.formatUnits(stake.amount, 6)} PYUSD, Predicted: ${stake.predictedMarks}, Claimed: ${stake.claimed}`);
+        // Get exam details to find candidates
+        const examDetails = await contract.getExam(examIdBytes32);
+        const candidates = examDetails[7]; // candidates array
         
-        if (stake.claimed) {
+        // Check if user has already claimed
+        const hasClaimed = await contract.hasClaimed(examIdBytes32, userAddress);
+        if (hasClaimed) {
           throw new Error('Rewards already claimed');
         }
         
-        if (stake.amount === 0n) {
+        // Check user's total stake across all candidates
+        let totalStake = 0n;
+        for (const candidate of candidates) {
+          const stake = await contract.stakeOf(examIdBytes32, userAddress, candidate);
+          totalStake += stake;
+        }
+        
+        setStatus(`Found stake: ${ethers.formatEther(totalStake)} ETH`);
+        
+        if (totalStake === 0n) {
           throw new Error('No stake found for this exam');
         }
-      } catch (error: any) {
-        throw new Error(`Stake verification failed: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Stake verification failed: ${errorMessage}`);
       }
       
       setStatus('Sending claim transaction...');
 
-      const tx = await contract.claimRewards(examIdBytes32);
+      const tx = await contract.claim(examIdBytes32);
       
       setStatus(`Transaction sent! Hash: ${tx.hash}`);
       setStatus('Waiting for confirmation...');
@@ -118,9 +204,10 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
         throw new Error('Transaction failed');
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Claim error:', error);
-      setStatus(`❌ Error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setStatus(`❌ Error: ${errorMessage}`);
     } finally {
       setClaiming(false);
     }

@@ -217,9 +217,9 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
         "function allowance(address owner, address spender) external view returns (uint256)"
       ];
 
-      const EXAM_ABI = [
-        "function stake(bytes32 examId, address candidate, uint256 amount) external"
-      ];
+      // const EXAM_ABI = [
+      //   "function stake(bytes32 examId, address candidate, uint256 amount) external"
+      // ];
 
       const pyusdContract = new ethers.Contract(PYUSD_ADDRESS, PYUSD_ABI, signer);
       const allowance = await pyusdContract.allowance(walletAddress, EXAM_STAKING_ADDRESS);

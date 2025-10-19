@@ -666,59 +666,76 @@ export const claimReward = async (req, res) => {
 
     try {
       // Call blockchain claim function
-      const examContract = new ethers.Contract(CONTRACTS.EXAM_STAKING, EXAM_ABI, wallet);
-      const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(exam.blockchainExamId));
+      // NOTE: The backend cannot claim on behalf of users!
+      // Users must claim from their own wallets
+      console.log("⚠️  Backend cannot claim on behalf of users");
+      console.log("   User must claim from their own wallet");
       
-      console.log("🔗 Calling blockchain claim for:", {
-        examId: exam.blockchainExamId,
-        userWallet: user.walletAddress,
-        contract: CONTRACTS.EXAM_STAKING
-      });
-
-      // Check if already claimed on blockchain
-      const alreadyClaimed = await examContract.hasClaimed(examIdBytes, user.walletAddress);
-      if (alreadyClaimed) {
-        // Update database to reflect already claimed status
-        await Stake.updateMany(
-          { exam: examId, student: userId },
-          { isClaimed: true, status: "paid", claimedAt: new Date() }
-        );
-        
-        return res.status(400).json({
-          success: false,
-          message: "Rewards already claimed on blockchain"
-        });
-      }
-
-      // Execute blockchain claim
-      const claimTx = await examContract.claim(examIdBytes);
-      await claimTx.wait();
-      
-      console.log("✅ Blockchain claim successful");
-
-      // Update database to mark as claimed
-      const totalRewardAmount = userStakes.reduce((sum, stake) => sum + stake.rewardAmount, 0);
-      
-      await Stake.updateMany(
-        { exam: examId, student: userId },
-        { 
-          isClaimed: true, 
-          status: "paid",
-          claimedAt: new Date(),
-          transactionHash: claimTx.hash
-        }
-      );
-
-      res.json({
-        success: true,
-        message: "Rewards claimed successfully!",
-        totalReward: totalRewardAmount,
-        transactionHash: claimTx.hash,
+      return res.status(400).json({
+        success: false,
+        message: "Claims must be made from your own wallet",
+        requiresUserTransaction: true,
         blockchain: {
           examId: exam.blockchainExamId,
-          contractAddress: CONTRACTS.EXAM_STAKING
+          contractAddress: CONTRACTS.EXAM_STAKING,
+          userWallet: user.walletAddress,
+          function: "claim",
+          parameters: [ethers.keccak256(ethers.toUtf8Bytes(exam.blockchainExamId))]
         }
       });
+
+      // Remove the old backend claiming code since it doesn't work
+      // const examContract = new ethers.Contract(CONTRACTS.EXAM_STAKING, EXAM_ABI, wallet);
+      // const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(exam.blockchainExamId));
+      
+      // console.log("🔗 Calling blockchain claim for:", {
+      //   examId: exam.blockchainExamId,
+      //   userWallet: user.walletAddress,
+      //   contract: CONTRACTS.EXAM_STAKING
+      // });
+
+      // // First check if exam exists on blockchain
+      // try {
+      //   const examDetails = await examContract.getExam(examIdBytes);
+      //   console.log("✅ Exam found on blockchain");
+      // } catch (examCheckError) {
+      //   if (examCheckError.message.includes("Exam not found")) {
+      //     return res.status(400).json({
+      //       success: false,
+      //       message: "This exam was not properly created on the blockchain. The stake may have failed initially. Please contact support.",
+      //       error: "EXAM_NOT_ON_BLOCKCHAIN"
+      //     });
+      //   }
+      //   throw examCheckError;
+      // }
+
+      // // Check if already claimed on blockchain
+      // const alreadyClaimed = await examContract.hasClaimed(examIdBytes, user.walletAddress);
+      // if (alreadyClaimed) {
+      //   // Update database to reflect already claimed status
+      //   await Stake.updateMany(
+      //     { exam: examId, student: userId },
+      //     { isClaimed: true, status: "paid", claimedAt: new Date() }
+      //   );
+        
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Rewards already claimed on blockchain"
+      //   });
+      // }
+
+      // // Execute blockchain claim
+      // const claimTx = await examContract.claim(examIdBytes);
+      // await claimTx.wait();
+      
+      // console.log("✅ Blockchain claim successful");
+
+      // // Update database to mark as claimed
+      // const totalRewardAmount = userStakes.reduce((sum, stake) => sum + stake.rewardAmount, 0);
+      
+      // // Old code that tried to do backend claiming (doesn't work)
+      // await Stake.updateMany(...)
+      // res.json({ success: true, ... });
 
     } catch (blockchainError) {
       console.error("❌ Blockchain claim failed:", blockchainError);

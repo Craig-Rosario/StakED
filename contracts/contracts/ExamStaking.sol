@@ -177,8 +177,21 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
 
         address[] memory winners = _getWinners(e);
         
-        // Case 1: Everyone wins - user gets back their stake
+        // Case 1: Everyone wins - but handle single participant specially
         if (winners.length == e.candidates.length) {
+            // Special case: Single participant who wins gets nothing (per new requirement)
+            if (e.candidates.length == 1) {
+                // Single participant - all stakes go to staked bank regardless of win/loss
+                uint256 totalAmount = e.totalStake;
+                if (totalAmount > 0) {
+                    address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
+                    pyusd.safeTransfer(stakedBank, totalAmount);
+                    e.totalStake = 0;
+                }
+                revert("Single participant stakes go to staked bank");
+            }
+            
+            // Multiple participants who all win - they get their stakes back
             uint256 userStake = _getTotalUserStake(e, msg.sender);
             require(userStake > 0, "No stake to claim");
             pyusd.safeTransfer(msg.sender, userStake);
@@ -191,16 +204,12 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
             revert("All stakes sent to staked bank");
         }
         
-        // Case 3: Some win, some lose - winner takes all
+        // Case 3: Some win, some lose - winners only get back their original stake
         (uint256 winnersTotal, uint256 userOnWinners) = _winnerTotals(e, msg.sender);
         require(userOnWinners > 0, "No winning stake");
 
-        uint256 losersTotal = e.totalStake - winnersTotal;
-        uint256 protocolFee = (losersTotal * e.feeBps) / 10_000;
-        uint256 redistributionPool = losersTotal - protocolFee;
-
-        // Winner takes all: their original stake + proportional share of loser pool
-        uint256 payout = userOnWinners + (redistributionPool * userOnWinners) / winnersTotal;
+        // Winners only get back their original stake (no redistribution from losers)
+        uint256 payout = userOnWinners;
 
         pyusd.safeTransfer(msg.sender, payout);
         emit Claimed(examId, msg.sender, payout);
@@ -238,9 +247,31 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
         address[] memory winners = _getWinners(e);
         address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
         
-        // Special case: If everyone wins, everyone gets their stake back
+        // Special case: If everyone wins, handle single participant differently
         if (winners.length == e.candidates.length) {
-            // Everyone wins - no redistribution needed, just mark finalized
+            // Single participant case - all stakes go to staked bank regardless of win/loss
+            if (e.candidates.length == 1) {
+                uint256 totalAmount = e.totalStake;
+                if (totalAmount > 0) {
+                    pyusd.safeTransfer(stakedBank, totalAmount);
+                    e.totalStake = 0;
+                    // Mark stake as claimed so no one can claim later
+                    address candidate = e.candidates[0];
+                    for (uint256 j = 0; j < e.candidates.length; j++) {
+                        address staker = e.candidates[j];
+                        if (e.stakeOf[staker][candidate] > 0) {
+                            e.hasClaimed[staker] = true;
+                            e.stakeOf[staker][candidate] = 0;
+                        }
+                    }
+                    e.totalOnCandidate[candidate] = 0;
+                }
+                e.finalized = true;
+                emit ExamFinalized(examId, winners);
+                return;
+            }
+            
+            // Multiple participants who all win - no redistribution needed, just mark finalized
             e.finalized = true;
             emit ExamFinalized(examId, winners);
             return;
@@ -271,13 +302,20 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
             return;
         }
         
-        // Normal case: Some win, some lose - winner takes all
+        // Normal case: Some win, some lose - all losing stakes go to staked bank
         (uint256 winnersTotal, ) = _calculateWinnersTotal(e);
         uint256 losersTotal = e.totalStake - winnersTotal;
         
         // Calculate protocol fee from loser stakes
         uint256 protocolFee = (losersTotal * e.feeBps) / 10_000;
         e.protocolFee += protocolFee;
+        
+        // Send all losing stakes (minus protocol fee) to staked bank
+        uint256 losingStakesToBank = losersTotal - protocolFee;
+        if (losingStakesToBank > 0) {
+            pyusd.safeTransfer(stakedBank, losingStakesToBank);
+            e.totalStake -= losingStakesToBank; // Remove the transferred amount from total
+        }
         
         // Finalize the exam
         e.finalized = true;

@@ -57,7 +57,7 @@ export const AppSidebar = () => {
     }
   };
 
-  const handleNavigate = (tab: string, route: string) => {
+  const handleNavigate = (tab: "dashboard" | "upcomingTest" | "classmates", route: string) => {
     setActiveTab(tab);
     navigate(route);
   };

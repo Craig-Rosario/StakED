@@ -77,8 +77,8 @@ const VerifierClassesDetails = () => {
     setExamForm({ ...examForm, [e.target.name]: e.target.value });
   };
 
-  const toISO = (s: string | Date) =>
-    typeof s === "string" ? new Date(s).toISOString() : new Date(s).toISOString();
+  // const toISO = (s: string | Date) =>
+  //   typeof s === "string" ? new Date(s).toISOString() : new Date(s).toISOString();
 
   const validateForm = () => {
     if (!examForm.name.trim()) {
