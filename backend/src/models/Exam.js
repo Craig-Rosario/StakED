@@ -37,11 +37,11 @@ const examSchema = new mongoose.Schema(
     },
     commitDeadline: {
       type: Date,
-      required: true,
+      required: false,
     },
     revealDeadline: {
       type: Date,
-      required: true,
+      required: false,
     },
     totalStakePool: {
       type: Number,
@@ -62,6 +62,39 @@ const examSchema = new mongoose.Schema(
       default: false,
     },
     gradedAt: {
+      type: Date,
+      default: null,
+    },
+    // Blockchain integration fields
+    blockchainExamId: {
+      type: String,
+      default: null,
+    },
+    blockchainCreated: {
+      type: Boolean,
+      default: false,
+    },
+    blockchainError: {
+      type: String,
+      default: null,
+    },
+    contractAddress: {
+      type: String,
+      default: "0x183d22182C5190b1E4df90527B05050d026fFce9", // Multi-verifier contract deployment
+    },
+    feeBps: {
+      type: Number,
+      default: 250, // 2.5% protocol fee
+    },
+    passingScore: {
+      type: Number,
+      default: 70,
+    },
+    rewardsDistributed: {
+      type: Boolean,
+      default: false,
+    },
+    distributedAt: {
       type: Date,
       default: null,
     },

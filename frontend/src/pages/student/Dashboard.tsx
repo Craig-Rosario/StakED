@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Wallet, Award, BookOpen, Clock, TrendingUp } from "lucide-react";
+import ManualClaim from "../../components/ManualClaim";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -34,6 +35,24 @@ interface Class {
   classmates?: number;
 }
 
+interface ClaimableStake {
+  _id: string;
+  stakeAmount: number;
+  rewardAmount: number;
+  predictedMarks: number;
+  actualMarks: number;
+  exam: {
+    _id: string;
+    name: string;
+    maxMarks: number;
+  };
+  class: {
+    name: string;
+    code: string;
+  };
+  createdAt: string;
+}
+
 export default function StudentDashboard() {
   const [stats, setStats] = useState<UserStats>({
     totalStaked: 0,
@@ -45,8 +64,12 @@ export default function StudentDashboard() {
   });
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [claimableStakes, setClaimableStakes] = useState<ClaimableStake[]>([]);
   const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState<string | null>(null);
   const [userName, setUserName] = useState("Student");
+  const [showManualClaim, setShowManualClaim] = useState(false);
+  const [manualClaimData, setManualClaimData] = useState<{contractAddress: string; examId: string} | null>(null);
   
   // Join Class States
   const [joinFormData, setJoinFormData] = useState({
@@ -60,6 +83,66 @@ export default function StudentDashboard() {
     fetchDashboardData();
   }, []);
 
+  const fetchClaimableStakes = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE}/exams/stakes/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Filter for claimable stakes (winner, not claimed, with reward amount)
+        const claimable = (data.stakes || []).filter((stake: any) => 
+          stake.isWinner && !stake.isClaimed && stake.rewardAmount > 0
+        );
+        setClaimableStakes(claimable);
+      }
+    } catch (error) {
+      console.error("Error fetching claimable stakes:", error);
+    }
+  };
+
+  const handleClaimReward = async (examId: string) => {
+    try {
+      setClaiming(examId);
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE}/exams/claim`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ examId })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert(`🎉 Rewards claimed successfully!\n💰 Amount: ${data.totalReward} PYUSD\n📋 Transaction: ${data.transactionHash}`);
+        fetchClaimableStakes();
+        fetchDashboardData(); 
+      } else {
+        if (data.requiresUserTransaction) {
+          setManualClaimData({
+            contractAddress: data.blockchain.contractAddress,
+            examId: data.blockchain.examId
+          });
+          setShowManualClaim(true);
+        } else {
+          alert(`❌ Claim failed: ${data.message}`);
+        }
+      }
+    } catch (error: any) {
+      alert(`❌ Claim error: ${error.message}`);
+    } finally {
+      setClaiming(null);
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -69,7 +152,6 @@ export default function StudentDashboard() {
         return;
       }
 
-      // Fetch user profile
       try {
         const userResponse = await fetch(`${API_BASE}/users/profile`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +166,8 @@ export default function StudentDashboard() {
         console.error("Error fetching user profile:", error);
       }
 
-      // Fetch student classes
+      await fetchClaimableStakes();
+
       try {
         const classesResponse = await fetch(`${API_BASE}/classes/student`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -117,7 +200,6 @@ export default function StudentDashboard() {
           );
           setClasses(classesWithDetails);
           
-          // Update stats with class count
           setStats(prev => ({
             ...prev,
             classesJoined: classesWithDetails.length,
@@ -127,7 +209,6 @@ export default function StudentDashboard() {
         console.error("Error fetching classes:", error);
       }
 
-      // Fetch upcoming exams count
       try {
         const examsResponse = await fetch(`${API_BASE}/classes/student/exams`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -222,7 +303,6 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#F9F9F9] p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-800 mb-2">
             Welcome back, <span className="text-green-500">{userName}</span>
@@ -232,9 +312,7 @@ export default function StudentDashboard() {
           </p>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Total Staked */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-100 border-2 border-black">
@@ -252,7 +330,6 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Classes Joined */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-100 border-2 border-black">
@@ -270,7 +347,6 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Upcoming Exams */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-yellow-100 border-2 border-black">
@@ -288,7 +364,6 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Active Stakes */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-purple-100 border-2 border-black">
@@ -306,7 +381,6 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Win Rate */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-100 border-2 border-black">
@@ -324,7 +398,6 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          {/* Total Earnings */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-100 border-2 border-black">
@@ -343,21 +416,74 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Content Grid */}
+        {claimableStakes.length > 0 && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-green-100 to-yellow-100 border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-green-500 border-2 border-black">
+                  <Wallet className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold text-gray-800 uppercase tracking-wide">
+                    🎉 Claimable Rewards Available!
+                  </h2>
+                  <p className="font-mono text-gray-600">
+                    You have {claimableStakes.length} reward{claimableStakes.length !== 1 ? 's' : ''} ready to claim
+                  </p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                {claimableStakes.map((stake) => (
+                  <div key={stake._id} className="bg-white border-2 border-black p-4 flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">{stake.exam.name}</h3>
+                      <p className="text-sm text-gray-600">
+                        Class: {stake.class.name} ({stake.class.code})
+                      </p>
+                      <p className="text-xs text-gray-500 font-mono">
+                        Predicted: {stake.predictedMarks}/{stake.exam.maxMarks} | 
+                        Actual: {stake.actualMarks}/{stake.exam.maxMarks} | 
+                        Staked: {stake.stakeAmount} PYUSD
+                      </p>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="text-lg font-bold text-green-600">
+                        💰 {stake.rewardAmount} PYUSD
+                      </div>
+                      <button
+                        onClick={() => handleClaimReward(stake.exam._id)}
+                        disabled={claiming === stake.exam._id}
+                        className="mt-2 px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {claiming === stake.exam._id ? "CLAIMING..." : "CLAIM REWARD"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 border-2 border-blue-300">
+                <p className="text-xs text-blue-800 font-bold">
+                  💡 Rewards are paid in PYUSD directly to your connected wallet. 
+                  Make sure MetaMask is connected to claim.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* My Classes */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <h2 className="text-2xl font-extrabold text-gray-800 mb-6 uppercase tracking-wide">
               My Classes
             </h2>
             
-            {/* Join Class Section */}
             <div className="mb-6 p-4 bg-gray-50 border-2 border-gray-300">
               <h3 className="font-bold text-gray-700 mb-3 uppercase text-sm tracking-wide">
                 Join a New Class
               </h3>
               
-              {/* Student Name Input */}
               <div className="mb-3">
                 <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
                   Your Name
@@ -372,7 +498,6 @@ export default function StudentDashboard() {
                 />
               </div>
 
-              {/* Class Code Input and Join Button */}
               <div className="flex gap-2">
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-gray-600 mb-1 uppercase tracking-wide">
@@ -409,7 +534,6 @@ export default function StudentDashboard() {
               )}
             </div>
 
-            {/* Classes List */}
             {classes.length === 0 ? (
               <div className="text-center py-8">
                 <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -432,7 +556,6 @@ export default function StudentDashboard() {
                       Instructor: {cls.verifier.username}
                     </p>
                     
-                    {/* Class Stats */}
                     <div className="grid grid-cols-3 gap-2 text-xs">
                       <div className="text-center bg-gray-50 border border-gray-300 p-2">
                         <div className="font-bold text-gray-800">{cls.upcomingExams || 0}</div>
@@ -453,7 +576,6 @@ export default function StudentDashboard() {
             )}
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <h2 className="text-2xl font-extrabold text-gray-800 mb-6 uppercase tracking-wide">
               Recent Activity
@@ -493,6 +615,18 @@ export default function StudentDashboard() {
           </div>
         </div>
       </div>
+
+      {showManualClaim && manualClaimData && (
+        <ManualClaim
+          contractAddress={manualClaimData.contractAddress}
+          examId={manualClaimData.examId}
+          onClose={() => {
+            setShowManualClaim(false);
+            setManualClaimData(null);
+            fetchClaimableStakes(); 
+          }}
+        />
+      )}
     </div>
   );
 }

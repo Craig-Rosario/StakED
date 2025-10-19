@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import LeaderboardCard from "@/components/custom/LeaderboardCard";
 import { NeoButton } from "@/components/custom/NeoButton";
 import { Trophy, Medal, Award } from "lucide-react";
@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import PerformanceDashboard from "@/components/custom/PerformanceDialog";
-import StakeDialogContent from "@/components/custom/StakeDialogContent"; 
+import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog"; 
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -185,6 +185,10 @@ const Classmates = () => {
     setSelectedStudent(null);
   };
 
+  const handleStakeSuccess = () => {
+    closeStakeDialog();
+  };
+
   const podiumData = [
     {
       icon: <Trophy className="w-10 h-10 text-yellow-600" />,
@@ -327,7 +331,6 @@ const Classmates = () => {
         </div>
       </section>
 
-      {/* Exam Selection Dialog */}
       <Dialog open={showExamSelection} onOpenChange={setShowExamSelection}>
         <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
           <DialogHeader>
@@ -381,24 +384,16 @@ const Classmates = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Stake Dialog */}
-      <Dialog open={showStakeDialog} onOpenChange={(open) => !open && closeStakeDialog()}>
-        <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
-          {selectedExam && selectedStudent && (
-            <StakeDialogContent
-              stakeTargetName={selectedStudent.name}
-              isSelfStake={false}
-              examId={selectedExam._id}
-              candidateAddress={selectedStudent.address}
-              onClose={closeStakeDialog}
-              onStakeSuccess={() => {
-                closeStakeDialog();
-                // Could refresh data here if needed
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {selectedExam && selectedStudent && (
+        <IntegratedStakeDialog
+          isOpen={showStakeDialog}
+          onClose={closeStakeDialog}
+          onSuccess={handleStakeSuccess}
+          examId={selectedExam._id}
+          candidateAddress={selectedStudent.address}
+          candidateName={selectedStudent.name}
+        />
+      )}
     </div>
   );
 };

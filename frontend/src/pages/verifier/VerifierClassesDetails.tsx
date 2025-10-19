@@ -27,7 +27,6 @@ const VerifierClassesDetails = () => {
   const [exams, setExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Grading dialog state
   const [selectedExam, setSelectedExam] = useState<any>(null);
   const [showGradingDialog, setShowGradingDialog] = useState(false);
 
@@ -36,10 +35,11 @@ const VerifierClassesDetails = () => {
     description: "",
     examDate: "",
     stakeDeadline: "",
-    commitDeadline: "",
-    revealDeadline: "",
     maxMarks: 100 as number | string,
+    passingScore: 70 as number | string,
   });
+
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchClassDetails = async () => {
@@ -80,28 +80,51 @@ const VerifierClassesDetails = () => {
   const toISO = (s: string | Date) =>
     typeof s === "string" ? new Date(s).toISOString() : new Date(s).toISOString();
 
+  const validateForm = () => {
+    if (!examForm.name.trim()) {
+      alert("Please enter exam name");
+      return false;
+    }
+    
+    if (!examForm.examDate) {
+      alert("Please set exam date");
+      return false;
+    }
+    
+    if (!examForm.stakeDeadline) {
+      alert("Please set stake deadline");
+      return false;
+    }
+
+    const examDateTime = new Date(examForm.examDate);
+    const stakeDateTime = new Date(examForm.stakeDeadline);
+
+    if (stakeDateTime >= examDateTime) {
+      alert("Stake deadline must be before exam date");
+      return false;
+    }
+
+    if (Number(examForm.maxMarks) <= 0) {
+      alert("Maximum marks must be greater than 0");
+      return false;
+    }
+
+    if (Number(examForm.passingScore) < 0 || Number(examForm.passingScore) > Number(examForm.maxMarks)) {
+      alert("Passing score must be between 0 and maximum marks");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleCreateExam = async () => {
+    if (!validateForm()) return;
+
+    setSubmitting(true);
     try {
       const token = localStorage.getItem("token");
 
-      if (!examForm.name || !examForm.examDate) {
-        alert("Please fill in all required fields");
-        return;
-      }
-
-      const examDateLocal = new Date(examForm.examDate);
-      const defaultStake = new Date(examDateLocal.getTime() - 24 * 60 * 60 * 1000);
-      defaultStake.setHours(23, 59, 0, 0);
-
-      const commit = examForm.commitDeadline
-        ? new Date(examForm.commitDeadline)
-        : new Date(examDateLocal.getTime() + 2 * 24 * 60 * 60 * 1000);
-
-      const reveal = examForm.revealDeadline
-        ? new Date(examForm.revealDeadline)
-        : new Date(examDateLocal.getTime() + 4 * 24 * 60 * 60 * 1000);
-
-      const response = await fetch(`${API_BASE}/classes/${id}/exams`, {
+      const response = await fetch(`${API_BASE}/exams/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,25 +133,27 @@ const VerifierClassesDetails = () => {
         body: JSON.stringify({
           name: examForm.name,
           description: examForm.description,
+          classId: id, // Pass the current class ID
+          examDate: examForm.examDate,
+          stakeDeadline: examForm.stakeDeadline,
           maxMarks: Number(examForm.maxMarks),
-          examDate: toISO(examForm.examDate),
-          stakeDeadline: toISO(defaultStake),
-          commitDeadline: toISO(commit),
-          revealDeadline: toISO(reveal),
+          passingScore: Number(examForm.passingScore),
         }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        alert("Exam created successfully!");
+      if (data.success) {
+        alert(`✅ Exam created successfully!\n\nBlockchain Integration: ${data.exam.blockchainCreated ? 'Enabled' : 'Failed'}\nStaking starts immediately for students.`);
         window.location.reload();
       } else {
-        alert(`Error: ${data.message}`);
+        throw new Error(data.message);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating exam:", err);
-      alert("Error creating exam");
+      alert(`❌ Failed to create exam: ${err.message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -248,14 +273,15 @@ const VerifierClassesDetails = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label className="uppercase text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
-                        <Calendar className="w-4 h-4" /> Exam Date
+                        <Calendar className="w-4 h-4" /> Exam Date & Time
                       </Label>
                       <Input
-                        type="date"
+                        type="datetime-local"
                         name="examDate"
                         value={examForm.examDate}
                         onChange={handleChange}
                         className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
+                        required
                       />
                     </div>
 
@@ -269,20 +295,38 @@ const VerifierClassesDetails = () => {
                         value={examForm.stakeDeadline}
                         onChange={handleChange}
                         className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
+                        required
                       />
+                      <p className="text-xs text-gray-500 mt-1">⏰ Must be before exam date</p>
                     </div>
                   </div>
 
-                  <div>
-                    <Label className="uppercase text-xs font-bold text-gray-800 mb-1 block">Maximum Marks</Label>
-                    <Input
-                      type="number"
-                      name="maxMarks"
-                      value={examForm.maxMarks}
-                      onChange={handleChange}
-                      placeholder="100"
-                      className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="uppercase text-xs font-bold text-gray-800 mb-1 block">Maximum Marks</Label>
+                      <Input
+                        type="number"
+                        name="maxMarks"
+                        value={examForm.maxMarks}
+                        onChange={handleChange}
+                        placeholder="100"
+                        min="1"
+                        className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="uppercase text-xs font-bold text-gray-800 mb-1 block">Passing Score</Label>
+                      <Input
+                        type="number"
+                        name="passingScore"
+                        value={examForm.passingScore}
+                        onChange={handleChange}
+                        placeholder="70"
+                        min="0"
+                        className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -300,10 +344,10 @@ const VerifierClassesDetails = () => {
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <button
                       onClick={handleCreateExam}
-                      disabled={!examForm.name || !examForm.examDate}
+                      disabled={!examForm.name || !examForm.examDate || !examForm.stakeDeadline || submitting}
                       className="flex-1 px-4 py-3 bg-red-400 text-white border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all rounded-md disabled:opacity-50 text-sm sm:text-base font-semibold cursor-pointer"
                     >
-                      Create
+                      {submitting ? "Creating with Blockchain..." : "Create Exam with Blockchain"}
                     </button>
                   </div>
                 </div>

@@ -11,7 +11,8 @@ import ClassmatesPage from "@/pages/student/Classmates";
 import VerifierDashboard from "@/pages/verifier/VerifierDashboard";
 import VerifierClasses from "@/pages/verifier/VerifierClasses";
 import VerifierClassesDetails from "@/pages/verifier/VerifierClassesDetails";
-import CreateExam from "@/pages/verifier/CreateExam";
+import IntegratedCreateExam from "@/pages/verifier/IntegratedCreateExam";
+import GradeExam from "@/pages/verifier/GradeExam";
 
 export default function AppRoutes() {
   return (
@@ -31,7 +32,8 @@ export default function AppRoutes() {
         <Route path="/verifier/dashboard" element={<VerifierDashboard />} />
         <Route path="/verifier/classes" element={<VerifierClasses />} />
         <Route path="/verifier/classes/:id" element={<VerifierClassesDetails />} />
-        <Route path="/verifier/create-exam" element={<CreateExam />} />
+        <Route path="/verifier/create-exam" element={<IntegratedCreateExam />} />
+        <Route path="/verifier/grade/:examId" element={<GradeExam />} />
       </Route>
 
       {/* Fallback */}

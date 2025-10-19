@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+
 
 interface Student {
   _id: string;
@@ -59,17 +59,11 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
       setIsLoading(true);
       setSubmitMessage('Processing grades...');
       
-      // Convert marks object to studentGrades array format expected by backend
-      const studentGrades = students.map(student => ({
-        studentId: student._id,
-        mark: marks[student._id] || 0
-      }));
+      setSubmitMessage('Submitting grades and distributing PYUSD rewards...');
       
-      setSubmitMessage('Submitting to backend...');
-      
-      // Submit grades to backend
+      // Submit grades to backend (which handles both database and blockchain automatically)
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE}/verifier/submit-grades`, {
+      const response = await fetch(`http://localhost:4000/api/exams/submit-grades`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,21 +71,28 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
         },
         body: JSON.stringify({
           examId,
-          studentGrades
+          grades: students.map(s => ({
+            studentAddress: s.walletAddress,
+            score: marks[s._id] || 0
+          }))
         })
       });
 
       const result = await response.json();
       
-      if (response.ok) {
-        setSubmitMessage(`✅ Success! ${result.data.winners} winners, ${result.data.losers} losers. Total stakes: ${result.data.totalStakes}`);
-        setTimeout(() => {
-          onGraded?.();
-          onClose?.();
-        }, 2000);
-      } else {
+      if (!response.ok) {
         setSubmitMessage(`❌ Error: ${result.message}`);
+        return;
       }
+
+      // Backend handles both database and blockchain automatically
+      setSubmitMessage(`🎉 Success! ${result.scenario || 'Grades submitted'} - Winners: ${result.winners || 0}/${result.totalStudents || students.length}. PYUSD rewards distributed!`);
+      
+      setTimeout(() => {
+        onGraded?.();
+        onClose?.();
+      }, 3000);
+      
     } catch (error) {
       console.error('Error submitting grades:', error);
       setSubmitMessage('❌ Failed to submit grades. Please try again.');

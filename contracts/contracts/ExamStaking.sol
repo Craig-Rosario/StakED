@@ -28,8 +28,9 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
         mapping(address => mapping(address => uint256)) stakeOf; 
         mapping(address => bool) isWinner;                    
         mapping(address => bool) hasClaimed;                     
-        uint16 feeBps;                                           
-        uint256 protocolFee;                                     
+        uint16 feeBps;
+        uint256 protocolFee;
+        mapping(address => uint256) studentScores;               // Student scores after grading
     }
 
     mapping(bytes32 => Exam) private exams; // examId → Exam
@@ -165,29 +166,134 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
         emit ExamFinalized(examId, winners);
     }
 
-    /// @notice Claim payout after finalization. One-time per staker per exam.
+    /// @notice Claim payout after finalization with new reward rules
     function claim(bytes32 examId) external nonReentrant {
         Exam storage e = exams[examId];
         require(e.finalized, "Not finalized");
         require(!e.canceled, "Exam canceled");
         require(!e.hasClaimed[msg.sender], "Already claimed");
 
+        e.hasClaimed[msg.sender] = true;
+
+        address[] memory winners = _getWinners(e);
+        
+        // Case 1: Everyone wins - user gets back their stake
+        if (winners.length == e.candidates.length) {
+            uint256 userStake = _getTotalUserStake(e, msg.sender);
+            require(userStake > 0, "No stake to claim");
+            pyusd.safeTransfer(msg.sender, userStake);
+            emit Claimed(examId, msg.sender, userStake);
+            return;
+        }
+        
+        // Case 2: Nobody wins - already handled in distributeRewards (sent to staked bank)
+        if (winners.length == 0) {
+            revert("All stakes sent to staked bank");
+        }
+        
+        // Case 3: Some win, some lose - winner takes all
         (uint256 winnersTotal, uint256 userOnWinners) = _winnerTotals(e, msg.sender);
         require(userOnWinners > 0, "No winning stake");
 
-        uint256 losers = e.totalStake - winnersTotal;
-        uint256 fee = (losers * e.feeBps) / 10_000;
-        uint256 pool = losers - fee;
+        uint256 losersTotal = e.totalStake - winnersTotal;
+        uint256 protocolFee = (losersTotal * e.feeBps) / 10_000;
+        uint256 redistributionPool = losersTotal - protocolFee;
 
-        e.hasClaimed[msg.sender] = true;
-        e.protocolFee += fee;
-
-        uint256 payout = userOnWinners + (pool * userOnWinners) / winnersTotal;
+        // Winner takes all: their original stake + proportional share of loser pool
+        uint256 payout = userOnWinners + (redistributionPool * userOnWinners) / winnersTotal;
 
         pyusd.safeTransfer(msg.sender, payout);
         emit Claimed(examId, msg.sender, payout);
     }
 
+    /// @notice Get total stake amount for a user across all candidates in an exam
+    function _getTotalUserStake(Exam storage e, address user) internal view returns (uint256 total) {
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            total += e.stakeOf[user][e.candidates[i]];
+        }
+    }
+
+    /// @notice Set student scores and determine winners based on score thresholds
+    function setStudentScores(bytes32 examId, address[] calldata students, uint256[] calldata scores, uint256 passingScore) external {
+        Exam storage e = exams[examId];
+        require(verifierRegistry.isVerifier(msg.sender), "Not authorized verifier");
+        require(!e.finalized, "Already finalized");
+        require(students.length == scores.length, "Array length mismatch");
+        
+        // Set scores and determine winners
+        for (uint256 i = 0; i < students.length; i++) {
+            e.studentScores[students[i]] = scores[i];
+            if (scores[i] >= passingScore) {
+                e.isWinner[students[i]] = true;
+            }
+        }
+    }
+
+    /// @notice Distribute rewards with special rules for 2-student case
+    function distributeRewards(bytes32 examId) external {
+        Exam storage e = exams[examId];
+        require(verifierRegistry.isVerifier(msg.sender), "Not authorized verifier");
+        require(!e.finalized, "Already finalized");
+        
+        address[] memory winners = _getWinners(e);
+        address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
+        
+        // Special case: If everyone wins, everyone gets their stake back
+        if (winners.length == e.candidates.length) {
+            // Everyone wins - no redistribution needed, just mark finalized
+            e.finalized = true;
+            emit ExamFinalized(examId, winners);
+            return;
+        }
+        
+        // Special case: If nobody wins, all stakes go to staked bank
+        if (winners.length == 0) {
+            // Transfer all stakes to staked bank
+            uint256 totalAmount = e.totalStake;
+            if (totalAmount > 0) {
+                pyusd.safeTransfer(stakedBank, totalAmount);
+                e.totalStake = 0;
+                // Mark all stakes as claimed so no one can claim later
+                for (uint256 i = 0; i < e.candidates.length; i++) {
+                    address candidate = e.candidates[i];
+                    for (uint256 j = 0; j < e.candidates.length; j++) {
+                        address staker = e.candidates[j];
+                        if (e.stakeOf[staker][candidate] > 0) {
+                            e.hasClaimed[staker] = true;
+                            e.stakeOf[staker][candidate] = 0;
+                        }
+                    }
+                    e.totalOnCandidate[candidate] = 0;
+                }
+            }
+            e.finalized = true;
+            emit ExamFinalized(examId, winners);
+            return;
+        }
+        
+        // Normal case: Some win, some lose - winner takes all
+        (uint256 winnersTotal, ) = _calculateWinnersTotal(e);
+        uint256 losersTotal = e.totalStake - winnersTotal;
+        
+        // Calculate protocol fee from loser stakes
+        uint256 protocolFee = (losersTotal * e.feeBps) / 10_000;
+        e.protocolFee += protocolFee;
+        
+        // Finalize the exam
+        e.finalized = true;
+        emit ExamFinalized(examId, winners);
+    }
+
+    /// @notice Get student score for an exam
+    function getStudentScore(bytes32 examId, address student) external view returns (uint256) {
+        return exams[examId].studentScores[student];
+    }
+
+    /// @notice Check if staking is still open for an exam
+    function isStakingOpen(bytes32 examId) external view returns (bool) {
+        Exam storage e = exams[examId];
+        return !e.finalized && !e.canceled && block.timestamp < e.stakeDeadline;
+    }
 
     function getExam(
         bytes32 examId
@@ -257,5 +363,35 @@ contract ExamStaking is Ownable, ReentrancyGuard, Pausable {
                 userOnWinners += e.stakeOf[staker][c];
             }
         }
+    }
+
+    function _calculateWinnersTotal(Exam storage e) internal view returns (uint256 winnersTotal, uint256 losersTotal) {
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            address c = e.candidates[i];
+            if (e.isWinner[c]) {
+                winnersTotal += e.totalOnCandidate[c];
+            } else {
+                losersTotal += e.totalOnCandidate[c];
+            }
+        }
+    }
+
+    function _getWinners(Exam storage e) internal view returns (address[] memory) {
+        uint256 winnerCount = 0;
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            if (e.isWinner[e.candidates[i]]) {
+                winnerCount++;
+            }
+        }
+        
+        address[] memory winners = new address[](winnerCount);
+        uint256 index = 0;
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            if (e.isWinner[e.candidates[i]]) {
+                winners[index] = e.candidates[i];
+                index++;
+            }
+        }
+        return winners;
     }
 }
