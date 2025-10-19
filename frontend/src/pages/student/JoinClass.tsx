@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -55,7 +55,6 @@ const JoinClass = () => {
       if (response.ok) {
         setMessage("Successfully joined the class!");
         setFormData({ classCode: "", studentName: "" });
-        // Optionally redirect to dashboard
         setTimeout(() => {
           window.location.href = "/student/dashboard";
         }, 2000);

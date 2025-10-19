@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import StakeDialogContent from "@/components/custom/StakeDialogContent";
+import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog";
 import {
   Dialog,
   DialogContent,
@@ -100,8 +99,7 @@ export default function UpcomingTestsDashboard() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      // This will be implemented when we add stakes functionality
-      // For now, using placeholder data
+
       setStats({
         totalStaked: "0 ETH",
         activeStakes: 0,
@@ -269,7 +267,6 @@ export default function UpcomingTestsDashboard() {
                     />
                   </div>
 
-                  {/* Recent Activity Placeholder */}
                   <div className="space-y-3">
                     <h4 className="font-bold text-gray-800 mb-3">Recent Activity</h4>
                     <div className="text-center py-8 text-gray-500">
@@ -284,7 +281,6 @@ export default function UpcomingTestsDashboard() {
         </div>
       </div>
 
-      {/* Exam Details Modal */}
       <Dialog open={showModal} onOpenChange={(isOpen) => { if (!isOpen) closeModal(); }}>
         <DialogContent className="w-[95vw] max-w-2xl bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
           {selectedExam && (
@@ -325,22 +321,19 @@ export default function UpcomingTestsDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Stake Modal */}
-      <Dialog open={showStakeModal} onOpenChange={(isOpen) => { if (!isOpen) closeStakeModal(); }}>
-        <DialogContent className="w-[95vw] max-w-md bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6">
-          <StakeDialogContent 
-            stakeTargetName={selectedExam?.name || 'this exam'} 
-            isSelfStake={true}
-            examId={selectedExam?._id}
-            candidateAddress="self" // Will be resolved to current user in component
-            onClose={closeStakeModal}
-            onStakeSuccess={() => {
-              closeStakeModal();
-              fetchExams(); // Refresh exam data
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {selectedExam && (
+        <IntegratedStakeDialog
+          isOpen={showStakeModal}
+          onClose={closeStakeModal}
+          onSuccess={() => {
+            closeStakeModal();
+            fetchExams(); 
+          }}
+          examId={selectedExam._id}
+          candidateAddress={""} 
+          candidateName="Yourself"
+        />
+      )}
     </div>
   );
 }

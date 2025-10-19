@@ -37,6 +37,12 @@ const stakeSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
+    predictedMarks: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+    },
     isSelfStake: {
       type: Boolean,
       required: true,

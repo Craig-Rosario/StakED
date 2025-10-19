@@ -7,6 +7,7 @@ import classRoutes from "./src/routes/classRoutes.js";
 import verifierRoutes from "./src/routes/verifierRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import stakeRoutes from "./src/routes/stakeRoutes.js";
+import examRoutes from "./src/routes/examRoutes.js";
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ app.use("/api/classes", classRoutes);
 app.use("/api/verifier", verifierRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/stakes", stakeRoutes);
-// app.use("/api/stakes", stakeRoutes); // Uncomment when stakes are implemented
+app.use("/api/exams", examRoutes);
 
 // Health check route
 app.get("/", (req, res) => {
