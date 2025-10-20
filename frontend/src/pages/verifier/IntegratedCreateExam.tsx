@@ -30,8 +30,7 @@ const IntegratedCreateExam: React.FC = () => {
     classId: "",
     examDate: "",
     stakeDeadline: "",
-    maxMarks: 100,
-    passingScore: 70
+    maxMarks: 100
   });
 
   useEffect(() => {
@@ -63,7 +62,7 @@ const IntegratedCreateExam: React.FC = () => {
   };
 
   const validateForm = () => {
-    const { name, classId, examDate, stakeDeadline, maxMarks, passingScore } = formData;
+    const { name, classId, examDate, stakeDeadline, maxMarks } = formData;
     
     if (!name.trim()) {
       alert("Please enter exam name");
@@ -98,10 +97,7 @@ const IntegratedCreateExam: React.FC = () => {
       return false;
     }
     
-    if (passingScore < 0 || passingScore > maxMarks) {
-      alert(`Passing score must be between 0 and ${maxMarks}`);
-      return false;
-    }
+    // Passing score validation removed - winners determined by prediction accuracy
 
     return true;
   };
@@ -276,19 +272,7 @@ const IntegratedCreateExam: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
-                      Passing Score
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.passingScore}
-                      onChange={(e) => handleInputChange('passingScore', parseInt(e.target.value) || 70)}
-                      min="0"
-                      max={formData.maxMarks}
-                      className="bg-white border-2 border-black text-[#0A0A0A] focus:border-[#00A2FF] px-4 py-3"
-                    />
-                  </div>
+                  {/* Passing score removed - winners determined by prediction accuracy */}
                 </div>
 
                 {/* Submit Button */}

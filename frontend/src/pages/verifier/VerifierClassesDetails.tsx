@@ -36,7 +36,6 @@ const VerifierClassesDetails = () => {
     examDate: "",
     stakeDeadline: "",
     maxMarks: 100 as number | string,
-    passingScore: 70 as number | string,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -109,10 +108,7 @@ const VerifierClassesDetails = () => {
       return false;
     }
 
-    if (Number(examForm.passingScore) < 0 || Number(examForm.passingScore) > Number(examForm.maxMarks)) {
-      alert("Passing score must be between 0 and maximum marks");
-      return false;
-    }
+    // Passing score validation removed - winners determined by prediction accuracy
 
     return true;
   };
@@ -137,7 +133,6 @@ const VerifierClassesDetails = () => {
           examDate: examForm.examDate,
           stakeDeadline: examForm.stakeDeadline,
           maxMarks: Number(examForm.maxMarks),
-          passingScore: Number(examForm.passingScore),
         }),
       });
 
@@ -315,18 +310,7 @@ const VerifierClassesDetails = () => {
                       />
                     </div>
 
-                    <div>
-                      <Label className="uppercase text-xs font-bold text-gray-800 mb-1 block">Passing Score</Label>
-                      <Input
-                        type="number"
-                        name="passingScore"
-                        value={examForm.passingScore}
-                        onChange={handleChange}
-                        placeholder="70"
-                        min="0"
-                        className="bg-white border-2 border-black px-3 py-2 text-sm sm:text-base"
-                      />
-                    </div>
+                    {/* Passing score removed - winners determined by prediction accuracy */}
                   </div>
 
                   <div>

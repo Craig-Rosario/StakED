@@ -38,7 +38,7 @@ const PYUSD_ABI = [
 ];
 
 const EXAM_STAKING_ABI = [
-  "function stake(bytes32 examId, address candidate, uint256 amount) external",
+  "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external",
   "function getExam(bytes32 examId) external view returns (address verifier, uint64 stakeDeadline, bool finalized, bool canceled, uint16 feeBps, uint256 totalStake, uint256 protocolFee, address[] memory candidates)"
 ];
 
@@ -52,6 +52,7 @@ export default function StakeDialog({
   examId
 }: StakeDialogProps) {
   const [amount, setAmount] = useState("");
+  const [predictedScore, setPredictedScore] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [userAddress, setUserAddress] = useState("");
@@ -89,6 +90,11 @@ export default function StakeDialog({
       toast.error("Please enter a valid stake amount");
       return;
     }
+    
+    if (!predictedScore || parseFloat(predictedScore) < 0 || parseFloat(predictedScore) > 100) {
+      toast.error("Please enter a valid predicted score (0-100)");
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -116,19 +122,21 @@ export default function StakeDialog({
 
       const examStakingContract = new ethers.Contract(EXAM_STAKING_ADDRESS, EXAM_STAKING_ABI, signer);
       
+      const predictedScoreInt = Math.floor(parseFloat(predictedScore));
+      
       let stakeTx;
       if (targetType === "exam") {
         const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes("two-student-final"));
-        stakeTx = await examStakingContract.stake(examIdBytes, userAddress, stakeAmount);
+        stakeTx = await examStakingContract.stake(examIdBytes, userAddress, stakeAmount, predictedScoreInt);
       } else {
         const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(examId || "two-student-final"));
-        stakeTx = await examStakingContract.stake(examIdBytes, targetId, stakeAmount);
+        stakeTx = await examStakingContract.stake(examIdBytes, targetId, stakeAmount, predictedScoreInt);
       }
 
       toast.info("Processing stake transaction...");
       await stakeTx.wait();
 
-      toast.success(`Successfully staked ${amount} PYUSD on ${targetName}!`);
+      toast.success(`Successfully staked ${amount} PYUSD on ${targetName} with ${predictedScore}% prediction!`);
       onSuccess();
       onClose();
       
@@ -142,6 +150,7 @@ export default function StakeDialog({
 
   const resetForm = () => {
     setAmount("");
+    setPredictedScore("");
     setIsLoading(false);
     setWalletConnected(false);
     setUserAddress("");
@@ -221,11 +230,32 @@ export default function StakeDialog({
                 />
               </div>
 
+              <div>
+                <Label className="uppercase text-xs font-bold text-gray-800 mb-2 block">
+                  Predicted Score (%)
+                </Label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={predictedScore}
+                  onChange={(e) => setPredictedScore(e.target.value)}
+                  placeholder="Enter your predicted score (0-100)"
+                  className="bg-white border-2 border-black px-3 py-3 text-base font-semibold"
+                />
+                <p className="text-xs text-gray-600 mt-1">
+                  💡 You win if your actual score ≥ predicted score!
+                </p>
+              </div>
+
               <div className="flex items-start gap-2 p-3 bg-orange-50 border-2 border-orange-200 rounded-md">
                 <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-orange-800">
-                  <p className="font-semibold mb-1">Important:</p>
-                  <p>Your stake will be locked until the exam is graded. You may gain or lose PYUSD based on the outcome.</p>
+                  <p className="font-semibold mb-1">New Logic - Prediction Based:</p>
+                  <p>✅ Win: Actual score ≥ Predicted score</p>
+                  <p>❌ Lose: Actual score &lt; Predicted score</p>
+                  <p className="mt-1 font-medium">Winners share losers' stakes proportionally!</p>
                 </div>
               </div>
 
@@ -239,7 +269,7 @@ export default function StakeDialog({
                 </Button>
                 <Button
                   onClick={approveAndStake}
-                  disabled={isLoading || !amount || parseFloat(amount) <= 0}
+                  disabled={isLoading || !amount || parseFloat(amount) <= 0 || !predictedScore}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold"
                 >
                   {isLoading ? "Processing..." : `Stake ${amount || "0"} PYUSD`}

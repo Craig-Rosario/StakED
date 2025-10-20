@@ -50,7 +50,7 @@ const stakeSchema = new mongoose.Schema(
     },
     targetThreshold: {
       type: Number,
-      required: true,
+      required: false,  // Optional for backward compatibility
       min: 0,
       max: 100,
     },
