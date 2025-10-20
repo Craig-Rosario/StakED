@@ -8,13 +8,19 @@ import Stake from "../models/Stake.js";
 // Configure dotenv to ensure environment variables are loaded
 dotenv.config();
 
-// Contract configuration (Updated with multi-verifier contract)
+// Contract configuration (Updated with prediction-based logic)
 const CONTRACTS = {
-  EXAM_STAKING: process.env.EXAM_STAKING_ADDRESS || "0x1E4731390cce9955BC21985BB45068A1858703C2",
+  EXAM_STAKING: process.env.EXAM_STAKING_ADDRESS || "0x2f0c87aA37B8aa3C390f34BfAF3341a6c067a190",
   PYUSD: process.env.PYUSD_ADDRESS || "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9",
-  STUDENT_REGISTRY: process.env.STUDENT_REGISTRY_ADDRESS || "0x0fd1373be62e1E197268aaFd505201db41d102Bd",
-  VERIFIER_REGISTRY: process.env.VERIFIER_REGISTRY_ADDRESS || "0xb079ca589DAd234cBF3A9Ae8e82E4132c0E20CF7"
+  STUDENT_REGISTRY: process.env.STUDENT_REGISTRY_ADDRESS || "0xF13330A8af65533793011d4d20Dd68bA1e8fe24a",
+  VERIFIER_REGISTRY: process.env.VERIFIER_REGISTRY_ADDRESS || "0x1903613D43Feb8266af88Fc67004103480cd86A2"
 };
+
+console.log("🔧 Contract Addresses Loaded:");
+console.log("  EXAM_STAKING:", CONTRACTS.EXAM_STAKING);
+console.log("  PYUSD:", CONTRACTS.PYUSD);
+console.log("  STUDENT_REGISTRY:", CONTRACTS.STUDENT_REGISTRY);
+console.log("  VERIFIER_REGISTRY:", CONTRACTS.VERIFIER_REGISTRY);
 
 const STAKED_BANK_ADDRESS = "0x6D41680267986408E5e7c175Ee0622cA931859A4";
 
@@ -22,14 +28,15 @@ const STAKED_BANK_ADDRESS = "0x6D41680267986408E5e7c175Ee0622cA931859A4";
 const EXAM_ABI = [
   "function createExam(bytes32 examId, address verifier, address[] candidates, uint64 stakeDeadline, uint16 feeBps) external",
   "function getExam(bytes32 examId) external view returns (address verifier, uint64 stakeDeadline, bool finalized, bool canceled, uint16 feeBps, uint256 totalStake, uint256 protocolFee, address[] memory candidates)",
-  "function stake(bytes32 examId, address candidate, uint256 amount) external",
+  "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external",
   "function stakeOf(bytes32 examId, address staker, address candidate) external view returns (uint256)",
   "function totalOn(bytes32 examId, address candidate) external view returns (uint256)",
-  "function setStudentScores(bytes32 examId, address[] students, uint256[] scores, uint256 passingScore) external",
+  "function setStudentScores(bytes32 examId, address[] students, uint256[] scores) external",
   "function distributeRewards(bytes32 examId) external",
   "function claim(bytes32 examId) external",
   "function isWinner(bytes32 examId, address candidate) external view returns (bool)",
   "function getStudentScore(bytes32 examId, address student) external view returns (uint256)",
+  "function getPredictedScore(bytes32 examId, address student) external view returns (uint256)",
   "function isStakingOpen(bytes32 examId) external view returns (bool)",
   "function hasClaimed(bytes32 examId, address staker) external view returns (bool)"
 ];
@@ -64,7 +71,7 @@ try {
 // 1. Simple Exam Creation (No blockchain initially)
 export const createExam = async (req, res) => {
   try {
-    const { name, description, examDate, stakeDeadline, maxMarks, classId, passingScore = 70 } = req.body;
+    const { name, description, examDate, stakeDeadline, maxMarks, classId } = req.body;
     const verifierId = req.user.userId; // From auth middleware
     
     console.log("🎯 Creating exam (blockchain integration on first stake)...");
@@ -100,7 +107,6 @@ export const createExam = async (req, res) => {
       maxMarks,
       classId,
       verifier: verifierId,
-      passingScore,
       blockchainExamId: examIdForBlockchain,
       status: "upcoming",
       blockchainCreated: false // Will be set to true when first student stakes
@@ -342,7 +348,6 @@ export const stakeOnStudent = async (req, res) => {
       confidence: 85, // Default confidence
       predictedMarks: parseFloat(predictedMarks),
       isSelfStake: staker.walletAddress.toLowerCase() === candidateAddress.toLowerCase(),
-      targetThreshold: exam.passingScore,
       status: "pending"
     });
 
@@ -351,14 +356,19 @@ export const stakeOnStudent = async (req, res) => {
     // 6. Return success (frontend will handle blockchain transaction)
     res.json({
       success: true,
-      message: `Stake recorded with ${predictedMarks}% predicted score. Please approve the blockchain transaction.`,
+      message: `Stake recorded with ${predictedMarks}% predicted score. Win if actual >= predicted!`,
       stake: stakeRecord,
       blockchain: {
         examId: exam.blockchainExamId,
         contractAddress: CONTRACTS.EXAM_STAKING,
         pyusdAddress: CONTRACTS.PYUSD,
         candidateAddress,
-        amount: amount
+        amount: amount,
+        predictedScore: predictedMarks
+      },
+      newLogic: {
+        winCondition: "actual_score >= predicted_score",
+        description: "You win if your actual score meets or exceeds your prediction"
       }
     });
 
@@ -491,15 +501,13 @@ export const submitGrades = async (req, res) => {
     
     const students = grades.map(g => g.studentAddress);
     const scores = grades.map(g => g.score);
-    const passingScore = exam.passingScore;
 
-    // 3. Set scores on blockchain
+    // 3. Set scores on blockchain (no passing score needed - winners determined by prediction accuracy)
     console.log("📝 Setting scores on blockchain...");
     const setScoresTx = await examContract.setStudentScores(
       examIdBytes, 
       students, 
-      scores, 
-      passingScore
+      scores
     );
     await setScoresTx.wait();
     console.log("✅ Scores set on blockchain");
@@ -555,32 +563,43 @@ export const submitGrades = async (req, res) => {
       }
     }
 
-    // 7. Determine reward scenario
+    // 7. Determine reward scenario based on prediction accuracy
     const winners = [];
+    const winnerDetails = [];
     for (const grade of grades) {
       const isWinner = await examContract.isWinner(examIdBytes, grade.studentAddress);
       if (isWinner) {
         winners.push(grade.studentAddress);
+        const predictedScore = await examContract.getPredictedScore(examIdBytes, grade.studentAddress);
+        winnerDetails.push({
+          address: grade.studentAddress,
+          actualScore: grade.score,
+          predictedScore: Number(predictedScore),
+          successful: grade.score >= Number(predictedScore)
+        });
       }
     }
 
     let scenario;
     if (winners.length === 0) {
-      scenario = "nobody_wins";
+      scenario = "nobody_wins_predictions_failed";
     } else if (winners.length === grades.length) {
-      scenario = "everyone_wins";
+      scenario = "everyone_wins_predictions_met";
     } else {
-      scenario = "mixed_results";
+      scenario = "mixed_results_some_predictions_met";
     }
 
     console.log(`🎯 Scenario: ${scenario}, Winners: ${winners.length}/${grades.length}`);
+    console.log("🎯 Winner details:", winnerDetails);
 
     res.json({
       success: true,
-      message: "Grades submitted and rewards distributed successfully",
+      message: "Grades submitted and rewards distributed successfully. Winners determined by prediction accuracy.",
       scenario,
       winners: winners.length,
       totalStudents: grades.length,
+      winnerDetails,
+      predictionBasedLogic: true,
       exam: {
         id: exam._id,
         name: exam.name,

@@ -86,10 +86,8 @@ const examSchema = new mongoose.Schema(
       type: Number,
       default: 250, // 2.5% protocol fee
     },
-    passingScore: {
-      type: Number,
-      default: 70,
-    },
+    // passingScore removed - winners determined by prediction accuracy
+    // Each student wins if: actual_score >= predicted_score
     rewardsDistributed: {
       type: Boolean,
       default: false,

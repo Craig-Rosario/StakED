@@ -2,9 +2,9 @@ import { ethers } from "ethers";
 
 export const CONTRACT_ADDRESSES = {
   PYUSD_ADDRESS: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9",
-  EXAM_STAKING_ADDRESS: "0x1E4731390cce9955BC21985BB45068A1858703C2",
-  STUDENT_REGISTRY_ADDRESS: "0x0fd1373be62e1E197268aaFd505201db41d102Bd",
-  VERIFIER_REGISTRY_ADDRESS: "0xb079ca589DAd234cBF3A9Ae8e82E4132c0E20CF7"
+  EXAM_STAKING_ADDRESS: "0x2f0c87aA37B8aa3C390f34BfAF3341a6c067a190",
+  STUDENT_REGISTRY_ADDRESS: "0xF13330A8af65533793011d4d20Dd68bA1e8fe24a",
+  VERIFIER_REGISTRY_ADDRESS: "0x1903613D43Feb8266af88Fc67004103480cd86A2"
 };
 
 // Alias for backwards compatibility
@@ -21,16 +21,17 @@ export const ABIS = {
   ],
   
   EXAM_STAKING: [
-    "function stake(bytes32 examId, address candidate, uint256 amount) external",
+    "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external",
     "function claim(bytes32 examId) external",
     "function refund(bytes32 examId, address candidate) external",
     "function createExam(bytes32 examId, address verifier, address[] candidates, uint64 stakeDeadline, uint16 feeBps) external",
-    "function setStudentScores(bytes32 examId, address[] students, uint256[] scores, uint256 passingScore) external",
+    "function setStudentScores(bytes32 examId, address[] students, uint256[] scores) external",
     "function distributeRewards(bytes32 examId) external",
     "function getExam(bytes32 examId) external view returns (address verifier, uint64 stakeDeadline, bool finalized, bool canceled, uint16 feeBps, uint256 totalStake, uint256 protocolFee, address[] memory candidates)",
     "function stakeOf(bytes32 examId, address staker, address candidate) external view returns (uint256)",
     "function totalOn(bytes32 examId, address candidate) external view returns (uint256)",
     "function getStudentScore(bytes32 examId, address student) external view returns (uint256)",
+    "function getPredictedScore(bytes32 examId, address student) external view returns (uint256)",
     "function isStakingOpen(bytes32 examId) external view returns (bool)",
     "function isWinner(bytes32 examId, address candidate) external view returns (bool)",
     "function hasClaimed(bytes32 examId, address staker) external view returns (bool)"
@@ -101,7 +102,7 @@ export class Web3Utils {
     return ethers.formatUnits(allowance, 6);
   }
 
-  async stakeOnExam(examId: string, candidateAddress: string, amount: string): Promise<ethers.ContractTransaction> {
+  async stakeOnExam(examId: string, candidateAddress: string, amount: string, predictedScore: number): Promise<ethers.ContractTransaction> {
     if (!this.signer) {
       throw new Error("Wallet not connected");
     }
@@ -110,7 +111,7 @@ export class Web3Utils {
     const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(examId));
     const amountWei = ethers.parseUnits(amount, 6);
     
-    return await contract.stake(examIdBytes, candidateAddress, amountWei);
+    return await contract.stake(examIdBytes, candidateAddress, amountWei, predictedScore);
   }
 
   async getExamInfo(examId: string): Promise<any> {
@@ -183,7 +184,7 @@ export class Web3Utils {
   }
 
   // Verifier functions
-  async setStudentScores(examId: string, students: string[], scores: number[], passingScore: number): Promise<ethers.ContractTransaction> {
+  async setStudentScores(examId: string, students: string[], scores: number[]): Promise<ethers.ContractTransaction> {
     if (!this.signer) {
       throw new Error("Wallet not connected");
     }
@@ -191,7 +192,19 @@ export class Web3Utils {
     const contract = new ethers.Contract(CONTRACTS.EXAM_STAKING_ADDRESS, ABIS.EXAM_STAKING, this.signer);
     const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(examId));
     
-    return await contract.setStudentScores(examIdBytes, students, scores, passingScore);
+    return await contract.setStudentScores(examIdBytes, students, scores);
+  }
+
+  async getPredictedScore(examId: string, studentAddress: string): Promise<number> {
+    if (!this.provider) {
+      throw new Error("Wallet not connected");
+    }
+
+    const contract = new ethers.Contract(CONTRACTS.EXAM_STAKING_ADDRESS, ABIS.EXAM_STAKING, this.provider);
+    const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(examId));
+    
+    const predicted = await contract.getPredictedScore(examIdBytes, studentAddress);
+    return Number(predicted);
   }
 
   async distributeRewards(examId: string): Promise<ethers.ContractTransaction> {

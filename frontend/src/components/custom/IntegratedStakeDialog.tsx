@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet, DollarSign, AlertCircle } from "lucide-react";
+import { CONTRACT_ADDRESSES } from "@/lib/web3Utils";
 
 const toast = {
   success: (message: string) => alert(`✅ ${message}`),
@@ -69,7 +70,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
   const getPyusdBalance = async (address: string, provider: ethers.BrowserProvider) => {
     try {
-      const PYUSD_ADDRESS = "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9";
+      const PYUSD_ADDRESS = CONTRACT_ADDRESSES.PYUSD_ADDRESS;
       const PYUSD_ABI = ["function balanceOf(address account) external view returns (uint256)"];
       
       const contract = new ethers.Contract(PYUSD_ADDRESS, PYUSD_ABI, provider);
@@ -114,7 +115,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const signer = await provider.getSigner();
 
       const EXAM_ABI = [
-        "function stake(bytes32 examId, address candidate, uint256 amount) external"
+        "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external"
       ];
 
       const response = await fetch('http://localhost:4000/api/exams/stake', {
@@ -139,8 +140,9 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const examContract = new ethers.Contract(data.blockchain.contractAddress, EXAM_ABI, signer);
       const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(data.blockchain.examId));
       const stakeAmountWei = ethers.parseUnits(amount, 6);
+      const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
       
-      const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei);
+      const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
       toast.info("Staking transaction sent. Waiting for confirmation...");
       
       await stakeTx.wait();
@@ -209,17 +211,17 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const provider = new ethers.BrowserProvider(window.ethereum!);
       const signer = await provider.getSigner();
 
-      const PYUSD_ADDRESS = data.blockchain.pyusdAddress;
-      const EXAM_STAKING_ADDRESS = data.blockchain.contractAddress;
+      const PYUSD_ADDRESS = CONTRACT_ADDRESSES.PYUSD_ADDRESS;
+      const EXAM_STAKING_ADDRESS = CONTRACT_ADDRESSES.EXAM_STAKING_ADDRESS;
       
       const PYUSD_ABI = [
         "function approve(address spender, uint256 amount) external returns (bool)",
         "function allowance(address owner, address spender) external view returns (uint256)"
       ];
 
-      // const EXAM_ABI = [
-      //   "function stake(bytes32 examId, address candidate, uint256 amount) external"
-      // ];
+      const EXAM_ABI = [
+        "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external"
+      ];
 
       const pyusdContract = new ethers.Contract(PYUSD_ADDRESS, PYUSD_ABI, signer);
       const allowance = await pyusdContract.allowance(walletAddress, EXAM_STAKING_ADDRESS);
@@ -231,6 +233,24 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
         await approveTx.wait();
         toast.info("Approval confirmed! Now staking...");
       }
+
+      // Execute the actual stake transaction
+      toast.info("Executing stake transaction...");
+      const examContract = new ethers.Contract(EXAM_STAKING_ADDRESS, EXAM_ABI, signer);
+      const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(data.blockchain.examId));
+      const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
+      
+      const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
+      toast.info("Stake transaction sent. Waiting for confirmation...");
+      
+      await stakeTx.wait();
+      toast.success(`Successfully staked ${stakeAmount} PYUSD on ${candidateName} with ${predictedMarks}% prediction!`);
+      
+      // Update balance after successful stake
+      await getPyusdBalance(walletAddress, provider);
+      
+      onSuccess();
+      onClose();
 
       setStep("confirm");
 

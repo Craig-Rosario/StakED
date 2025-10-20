@@ -29,7 +29,6 @@ interface ExamInfo {
   _id: string;
   name: string;
   description: string;
-  passingScore: number;
   blockchainExamId: string;
   rewardsDistributed: boolean;
   status: string;
@@ -115,25 +114,30 @@ const GradeExam: React.FC = () => {
   const calculateRewardPreview = () => {
     if (!examInfo || !examInfo.blockchain) return null;
 
-    const passingScore = examInfo.passingScore;
     const totalStaked = parseFloat(examInfo.blockchain.totalStake);
     const protocolFee = totalStaked * 0.025; // 2.5%
     
-    const winners = grades.filter(g => g.score >= passingScore);
+    // Winners are those who meet or exceed their predicted scores
+    // For now, we'll estimate based on available data or mark as "TBD"
+    const estimatedWinners = grades.filter(g => {
+      // If we have prediction data from blockchain, use it
+      // For now, assume average prediction of 70% for estimation
+      const estimatedPrediction = 70; // This would come from blockchain in real implementation
+      return g.score >= estimatedPrediction;
+    });
 
     let scenario = "";
     let distribution = "";
 
-    if (winners.length === 0) {
-      scenario = "Nobody Wins";
-      distribution = `All ${totalStaked} PYUSD goes to Staked Bank`;
-    } else if (winners.length === grades.length) {
-      scenario = "Everyone Wins";
-      distribution = "Everyone gets their stake back";
+    if (estimatedWinners.length === 0) {
+      scenario = "Estimated: Nobody Meets Predictions";
+      distribution = `Estimated: All ${totalStaked.toFixed(3)} PYUSD goes to Staked Bank`;
+    } else if (estimatedWinners.length === grades.length) {
+      scenario = "Estimated: Everyone Meets Predictions";
+      distribution = "Estimated: Everyone gets their stake back (no redistribution)";
     } else {
-      scenario = "Mixed Results";
-      const winnerReward = totalStaked - protocolFee;
-      distribution = `Winner(s) split ${winnerReward.toFixed(3)} PYUSD`;
+      scenario = "Estimated: Mixed Results";
+      distribution = `Estimated: Winners get proportional share of losers' stakes`;
     }
 
     return {
@@ -141,8 +145,9 @@ const GradeExam: React.FC = () => {
       distribution,
       totalStaked,
       protocolFee,
-      winners: winners.length,
-      total: grades.length
+      winners: estimatedWinners.length,
+      total: grades.length,
+      note: "Final results depend on each student's actual predictions"
     };
   };
 
@@ -281,8 +286,8 @@ const GradeExam: React.FC = () => {
             <div className="flex items-center space-x-2">
               <Trophy className="w-5 h-5 text-yellow-600" />
               <div>
-                <p className="font-semibold">Pass: {examInfo.passingScore}%</p>
-                <p className="text-sm text-gray-600">Passing score</p>
+                <p className="font-semibold">Prediction-Based</p>
+                <p className="text-sm text-gray-600">Win if actual ≥ predicted</p>
               </div>
             </div>
           </CardContent>
@@ -317,11 +322,12 @@ const GradeExam: React.FC = () => {
                   />
                 </div>
                 <div className="w-20 text-center">
-                  {grade.score >= examInfo.passingScore ? (
-                    <span className="text-green-600 font-semibold">PASS</span>
-                  ) : (
-                    <span className="text-red-600 font-semibold">FAIL</span>
-                  )}
+                  <span className="text-blue-600 font-semibold text-sm">
+                    Score: {grade.score}%
+                  </span>
+                  <div className="text-xs text-gray-500">
+                    vs Prediction
+                  </div>
                 </div>
               </div>
             ))}
