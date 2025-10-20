@@ -26,6 +26,13 @@ interface Exam {
   status: string;
 }
 
+interface StakeInfo {
+  hasStaked: boolean;
+  totalStakeAmount: number;
+  averagePredictedGrade: number;
+  stakeCount: number;
+}
+
 interface StatCardProps {
   title: string;
   value: string;
@@ -49,11 +56,19 @@ const StatCard = ({ title, value, subtitle, trend, className = "" }: StatCardPro
   );
 };
 
+interface StakeInfo {
+  hasStaked: boolean;
+  totalStakeAmount: number;
+  averagePredictedGrade: number;
+  stakeCount: number;
+}
+
 export default function UpcomingTestsDashboard() {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showStakeModal, setShowStakeModal] = useState(false);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [examStakeInfo, setExamStakeInfo] = useState<Record<string, StakeInfo>>({});
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStaked: "0 ETH",
@@ -66,6 +81,30 @@ export default function UpcomingTestsDashboard() {
     fetchExams();
     fetchStats();
   }, []);
+
+  const fetchStakeInfo = async (examId: string): Promise<StakeInfo> => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/exams/${examId}/stake-status`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          hasStaked: data.hasStaked,
+          totalStakeAmount: data.totalStakeAmount || 0,
+          averagePredictedGrade: data.averagePredictedGrade || 0,
+          stakeCount: data.stakeCount || 0,
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching stake info:", error);
+    }
+    return { hasStaked: false, totalStakeAmount: 0, averagePredictedGrade: 0, stakeCount: 0 };
+  };
 
   const fetchExams = async () => {
     try {
@@ -83,7 +122,15 @@ export default function UpcomingTestsDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setExams(data.exams || []);
+        const examList = data.exams || [];
+        setExams(examList);
+
+        // Fetch stake info for each exam
+        const stakeInfoMap: Record<string, StakeInfo> = {};
+        for (const exam of examList) {
+          stakeInfoMap[exam._id] = await fetchStakeInfo(exam._id);
+        }
+        setExamStakeInfo(stakeInfoMap);
       } else {
         console.error("Failed to fetch exams");
       }
@@ -210,22 +257,45 @@ export default function UpcomingTestsDashboard() {
                             
                             <div className="flex flex-col items-end gap-2">
                               <span className={`px-3 py-1 text-xs font-bold border-2 border-black ${
-                                exam.canStake ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                examStakeInfo[exam._id]?.hasStaked 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : exam.canStake 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
                               }`}>
-                                {exam.canStake ? 'CAN STAKE' : 'STAKING CLOSED'}
+                                {examStakeInfo[exam._id]?.hasStaked 
+                                  ? `Staked: ${examStakeInfo[exam._id].totalStakeAmount} PYUSD | Predicted Grade: ${examStakeInfo[exam._id].averagePredictedGrade}`
+                                  : exam.canStake 
+                                    ? 'CAN STAKE' 
+                                    : 'STAKING CLOSED'
+                                }
                               </span>
+
                             </div>
                           </div>
                           
                           <button 
-                            className="w-full py-2 mt-3 sm:mt-4 text-sm sm:text-lg text-black bg-white cursor-pointer border-2 border-black font-bold hover:bg-gray-50"
+                            className={`w-full py-2 mt-3 sm:mt-4 text-sm sm:text-lg border-2 border-black font-bold ${
+                              examStakeInfo[exam._id]?.hasStaked 
+                                ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                                : exam.canStake 
+                                  ? 'text-black bg-white cursor-pointer hover:bg-gray-50'
+                                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                            }`}
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
-                              handleExamSelect(exam);
+                              if (!examStakeInfo[exam._id]?.hasStaked && exam.canStake) {
+                                handleExamSelect(exam);
+                              }
                             }}
-                            disabled={!exam.canStake}
+                            disabled={examStakeInfo[exam._id]?.hasStaked || !exam.canStake}
                           >
-                            {exam.canStake ? 'STAKE NOW' : 'VIEW DETAILS'}
+                            {examStakeInfo[exam._id]?.hasStaked 
+                              ? 'Already Staked' 
+                              : exam.canStake 
+                                ? 'STAKE NOW' 
+                                : 'VIEW DETAILS'
+                            }
                           </button>
                         </div>
                       ))}
@@ -308,13 +378,21 @@ export default function UpcomingTestsDashboard() {
                 </div>
               </div>
               
-              {selectedExam.canStake && (
+              {selectedExam.canStake && !examStakeInfo[selectedExam._id]?.hasStaked && (
                 <button 
                   onClick={openStakeModal}
                   className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6 cursor-pointer bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-transform"
                 >
                   PLACE YOUR STAKE
                 </button>
+              )}
+              
+              {examStakeInfo[selectedExam._id]?.hasStaked && (
+                <div className="w-full py-3 sm:py-4 text-lg sm:text-xl mt-4 sm:mt-6 bg-gray-100 border-2 border-gray-400 text-gray-600 font-bold text-center">
+                  Already Staked: {examStakeInfo[selectedExam._id].totalStakeAmount} PYUSD
+                  <br />
+                  <span className="text-sm">Predicted Grade: {examStakeInfo[selectedExam._id].averagePredictedGrade}</span>
+                </div>
               )}
             </>
           )}
@@ -327,7 +405,7 @@ export default function UpcomingTestsDashboard() {
           onClose={closeStakeModal}
           onSuccess={() => {
             closeStakeModal();
-            fetchExams(); 
+            fetchExams(); // This will also refresh stake info
           }}
           examId={selectedExam._id}
           candidateAddress={""} 

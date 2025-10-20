@@ -785,3 +785,158 @@ export const claimReward = async (req, res) => {
     });
   }
 };
+
+// 7. Get Student Stake Status for specific exam
+export const getStudentStakeStatus = async (req, res) => {
+  try {
+    const { examId } = req.params;
+    const userId = req.user.userId;
+    
+    // Find any stakes this student has on this exam
+    const stakes = await Stake.find({ 
+      exam: examId, 
+      student: userId 
+    }).populate('exam', 'name maxMarks');
+    
+    if (stakes.length === 0) {
+      return res.json({
+        success: true,
+        hasStaked: false,
+        stakes: []
+      });
+    }
+    
+    // Calculate totals
+    const totalStakeAmount = stakes.reduce((sum, stake) => sum + stake.stakeAmount, 0);
+    const predictedGrades = stakes.map(stake => stake.predictedMarks);
+    const averagePredicted = predictedGrades.reduce((sum, grade) => sum + grade, 0) / predictedGrades.length;
+    
+    const response = {
+      success: true,
+      hasStaked: true,
+      totalStakeAmount,
+      averagePredictedGrade: Math.round(averagePredicted),
+      stakeCount: stakes.length,
+      stakes: stakes.map(stake => ({
+        _id: stake._id,
+        candidateAddress: stake.candidateAddress,
+        stakeAmount: stake.stakeAmount,
+        predictedMarks: stake.predictedMarks,
+        isSelfStake: stake.isSelfStake,
+        status: stake.status
+      }))
+    };
+    
+    console.log("✅ Returning stake status:", response);
+    res.json(response);
+    
+  } catch (error) {
+    console.error("Get stake status error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to get stake status",
+      error: error.message
+    });
+  }
+};
+
+// 8. Mark stakes as claimed after successful MetaMask transaction
+export const markStakesClaimed = async (req, res) => {
+  try {
+    const { examId } = req.body;
+    const userId = req.user.userId;
+    
+    console.log("🔍 Mark claimed request:", { examId, userId });
+    
+    // First, try to find the exam by blockchain ID, then get the MongoDB _id
+    let targetExamId = examId;
+    
+    // If examId looks like a blockchain ID (string), find the corresponding MongoDB exam
+    if (typeof examId === 'string' && !examId.match(/^[0-9a-fA-F]{24}$/)) {
+      const exam = await Exam.findOne({ blockchainExamId: examId });
+      if (exam) {
+        targetExamId = exam._id;
+        console.log("✅ Found exam by blockchain ID:", examId, "->", targetExamId);
+      } else {
+        console.log("❌ No exam found with blockchainExamId:", examId);
+        return res.status(404).json({
+          success: false,
+          message: "Exam not found with the provided ID"
+        });
+      }
+    }
+    
+    // First, let's check what stakes exist for this user
+    const existingStakes = await Stake.find({ student: userId, isWinner: true, isClaimed: false })
+      .populate('exam', 'name blockchainExamId');
+    
+    console.log("📋 Found unclaimed winning stakes for user:", existingStakes.map(s => ({
+      examName: s.exam?.name,
+      examId: s.exam?._id,
+      blockchainExamId: s.exam?.blockchainExamId
+    })));
+    
+    // Update stakes to mark as claimed
+    const result = await Stake.updateMany(
+      { 
+        exam: targetExamId, 
+        student: userId, 
+        isWinner: true, 
+        isClaimed: false 
+      },
+      { 
+        isClaimed: true, 
+        status: "paid", 
+        claimedAt: new Date() 
+      }
+    );
+    
+    console.log("📊 Update result:", { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount });
+    
+    // If no matches, try to find by blockchain exam ID in a different way
+    if (result.modifiedCount === 0) {
+      console.log("⚠️ No stakes were updated, trying alternative approach...");
+      
+      // Find all exams with this blockchain ID
+      const matchingExams = await Exam.find({ blockchainExamId: examId });
+      console.log("🔍 Found exams with blockchain ID:", matchingExams.map(e => e._id));
+      
+      if (matchingExams.length > 0) {
+        const examIds = matchingExams.map(e => e._id);
+        const altResult = await Stake.updateMany(
+          { 
+            exam: { $in: examIds }, 
+            student: userId, 
+            isWinner: true, 
+            isClaimed: false 
+          },
+          { 
+            isClaimed: true, 
+            status: "paid", 
+            claimedAt: new Date() 
+          }
+        );
+        
+        console.log("📊 Alternative update result:", altResult);
+        result.modifiedCount = altResult.modifiedCount;
+        result.matchedCount = altResult.matchedCount;
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: "Stakes marked as claimed",
+      updatedStakes: result.modifiedCount,
+      matchedStakes: result.matchedCount,
+      examId: targetExamId
+    });
+    
+  } catch (error) {
+    console.error("❌ Mark claimed error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Failed to mark stakes as claimed",
+      error: error.message
+    });
+  }
+};

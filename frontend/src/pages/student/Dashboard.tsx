@@ -60,6 +60,8 @@ export default function StudentDashboard() {
   const [userName, setUserName] = useState("Student");
   const [showManualClaim, setShowManualClaim] = useState(false);
   const [manualClaimData, setManualClaimData] = useState<{contractAddress: string; examId: string} | null>(null);
+  const [claimedRewards, setClaimedRewards] = useState<string[]>([]); // Track successfully claimed exam IDs
+  const [showClaimSuccess, setShowClaimSuccess] = useState(false);
   
   // Join Class States
   const [joinFormData, setJoinFormData] = useState({
@@ -112,7 +114,15 @@ export default function StudentDashboard() {
       const data = await response.json();
       
       if (data.success) {
-        alert(`🎉 Rewards claimed successfully!\n💰 Amount: ${data.totalReward} PYUSD\n📋 Transaction: ${data.transactionHash}`);
+        // Track successfully claimed reward
+        setClaimedRewards(prev => [...prev, examId]);
+        setShowClaimSuccess(true);
+        
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setShowClaimSuccess(false);
+        }, 5000);
+        
         fetchClaimableStakes();
         fetchDashboardData(); 
       } else {
@@ -406,6 +416,26 @@ export default function StudentDashboard() {
           </div>
         </div>
 
+        {showClaimSuccess && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-green-100 to-green-200 border-4 border-green-500 p-6 shadow-[8px_8px_0px_#22c55e]">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-500 border-2 border-green-700">
+                  <Award className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-extrabold text-green-800 uppercase tracking-wide">
+                    ✅ Reward Claimed Successfully!
+                  </h2>
+                  <p className="font-mono text-green-700">
+                    Your PYUSD has been transferred to your wallet
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {claimableStakes.length > 0 && (
           <div className="mb-8">
             <div className="bg-gradient-to-r from-green-100 to-yellow-100 border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
@@ -438,9 +468,6 @@ export default function StudentDashboard() {
                       </p>
                     </div>
                     <div className="text-right ml-4">
-                      <div className="text-lg font-bold text-green-600">
-                        💰 {stake.rewardAmount} PYUSD
-                      </div>
                       <button
                         onClick={() => stake.exam?._id && handleClaimReward(stake.exam._id)}
                         disabled={claiming === stake.exam?._id || !stake.exam?._id}
@@ -590,6 +617,8 @@ export default function StudentDashboard() {
           onClose={() => {
             setShowManualClaim(false);
             setManualClaimData(null);
+            setShowClaimSuccess(true);
+            setTimeout(() => setShowClaimSuccess(false), 5000);
             fetchClaimableStakes(); 
           }}
         />

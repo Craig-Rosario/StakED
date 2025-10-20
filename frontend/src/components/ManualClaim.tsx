@@ -195,11 +195,41 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
       const receipt = await tx.wait();
       
       if (receipt.status === 1) {
-        setStatus('✅ Rewards claimed successfully!');
+        setStatus('✅ Rewards claimed successfully! Updating database...');
+        
+        // Mark stakes as claimed in the backend database
+        try {
+          const token = localStorage.getItem("token");
+          console.log("📤 Marking stakes as claimed for exam ID:", examId);
+          
+          const dbResponse = await fetch(`http://localhost:4000/api/exams/mark-claimed`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ examId })
+          });
+          
+          if (dbResponse.ok) {
+            const result = await dbResponse.json();
+            console.log("✅ Database update result:", result);
+            setStatus('✅ Database updated! Rewards claimed successfully!');
+          } else {
+            const errorText = await dbResponse.text();
+            console.error('Database update failed:', dbResponse.status, errorText);
+            setStatus(`✅ Rewards claimed! (Database update failed: ${dbResponse.status})`);
+          }
+        } catch (dbError) {
+          console.error('Database update failed:', dbError);
+          setStatus('✅ Rewards claimed! (Note: Database update failed)');
+        }
+        
         setTimeout(() => {
           onClose();
+          // Force a full page reload to ensure all state is refreshed
           window.location.reload(); 
-        }, 3000);
+        }, 2000);
       } else {
         throw new Error('Transaction failed');
       }
