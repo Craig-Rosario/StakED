@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wallet, Award, BookOpen, Clock, TrendingUp } from "lucide-react";
 import ManualClaim from "../../components/ManualClaim";
+import { StudentAnalytics } from "../../components/StudentAnalytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -53,6 +54,8 @@ export default function StudentDashboard() {
     classesJoined: 0,
     upcomingExams: 0,
   });
+  const [userWalletAddress, setUserWalletAddress] = useState<string>("");
+  const [chainId] = useState<string>("11155111"); // Sepolia
   const [classes, setClasses] = useState<Class[]>([]);
   const [claimableStakes, setClaimableStakes] = useState<ClaimableStake[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,7 +162,10 @@ export default function StudentDashboard() {
         if (userResponse.ok) {
           const userData = await userResponse.json();
           const currentUserName = userData.user?.username || "Student";
+          const walletAddress = userData.user?.walletAddress || "";
+          console.log('Wallet address from API:', walletAddress); // Debug log
           setUserName(currentUserName);
+          setUserWalletAddress(walletAddress);
           setJoinFormData(prev => ({ ...prev, studentName: currentUserName }));
         }
       } catch (error) {
@@ -311,6 +317,12 @@ export default function StudentDashboard() {
             Your StakED performance at a glance
           </p>
         </div>
+
+        {userWalletAddress && (
+          <div className="mb-8">
+            <StudentAnalytics userAddress={userWalletAddress} chainId={chainId} />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
