@@ -368,9 +368,14 @@ const VerifierClassesDetails = () => {
                   <div className="flex justify-between mt-3">
                     <Button 
                       onClick={() => handleGradeExam(exam)}
-                      className="bg-[#00FF99] text-black px-4 py-2 text-xs sm:text-sm font-bold cursor-pointer rounded-md w-full sm:w-auto"
+                      disabled={exam.rewardsDistributed}
+                      className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-md w-full sm:w-auto ${
+                        exam.rewardsDistributed 
+                          ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+                          : 'bg-[#00FF99] text-black cursor-pointer hover:bg-[#00DD88]'
+                      }`}
                     >
-                      Grade
+                      {exam.rewardsDistributed ? 'Exam Graded' : 'Grade'}
                     </Button>
                   </div>
                 </div>

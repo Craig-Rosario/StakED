@@ -167,6 +167,11 @@ const VerifierClasses = () => {
                 <h3 className="text-lg sm:text-xl font-black uppercase mb-2">
                   {cls.name}
                 </h3>
+                <div className="mb-3">
+                  <span className="bg-blue-100 border-2 border-blue-300 px-3 py-1 text-xs font-bold text-blue-800 rounded">
+                    Class Code: {cls.code}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-gray-700 mb-2">
                   <span className="flex items-center gap-2">
                     <Users className="w-4 h-4 text-[#00A2FF]" />{" "}
