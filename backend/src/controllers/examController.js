@@ -10,7 +10,7 @@ dotenv.config();
 
 // Contract configuration (Updated with prediction-based logic)
 const CONTRACTS = {
-  EXAM_STAKING: process.env.EXAM_STAKING_ADDRESS || "0x2f0c87aA37B8aa3C390f34BfAF3341a6c067a190",
+  EXAM_STAKING: process.env.EXAM_STAKING_ADDRESS || "0xa147C9A89f50771A89dD421A614A8570f765a20E",
   PYUSD: process.env.PYUSD_ADDRESS || "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9",
   STUDENT_REGISTRY: process.env.STUDENT_REGISTRY_ADDRESS || "0xF13330A8af65533793011d4d20Dd68bA1e8fe24a",
   VERIFIER_REGISTRY: process.env.VERIFIER_REGISTRY_ADDRESS || "0x1903613D43Feb8266af88Fc67004103480cd86A2"
@@ -160,6 +160,15 @@ const initializeBlockchainForExam = async (exam) => {
     await registerTx.wait();
     console.log("✅ Verifier registered");
   }
+  
+  // Also ensure deployer wallet is registered as verifier (needed to create exams)
+  const deployerIsVerifier = await verifierRegistry.isVerifier(wallet.address);
+  if (!deployerIsVerifier) {
+    console.log("📝 Registering deployer as verifier...");
+    const registerDeployerTx = await verifierRegistry.addVerifier(wallet.address);
+    await registerDeployerTx.wait();
+    console.log("✅ Deployer registered as verifier");
+  }
 
   // Register students and collect candidate addresses
   const studentRegistry = new ethers.Contract(CONTRACTS.STUDENT_REGISTRY, STUDENT_ABI, wallet);
@@ -297,6 +306,34 @@ export const stakeOnStudent = async (req, res) => {
       console.log("  - Exam ID:", exam.blockchainExamId);
       console.log("  - Exam ID Bytes:", examIdBytes);
       console.log("  - Contract Address:", CONTRACTS.EXAM_STAKING);
+      
+      // First check if exam exists on blockchain by trying to get exam info
+      let examExists = false;
+      try {
+        const [verifier] = await examContract.getExam(examIdBytes);
+        examExists = verifier !== "0x0000000000000000000000000000000000000000";
+        console.log("  - Exam exists on blockchain:", examExists);
+      } catch (error) {
+        console.log("  - Exam does not exist on blockchain, need to create it");
+        examExists = false;
+      }
+      
+      if (!examExists) {
+        console.log("🔗 Exam not on blockchain - reinitializing...");
+        
+        // Reset blockchain status and reinitialize
+        exam.blockchainCreated = false;
+        await exam.save();
+        
+        await initializeBlockchainForExam(exam);
+        console.log("✅ Exam created on blockchain!");
+        
+        // Refresh exam object
+        const updatedExam = await Exam.findById(examId);
+        if (!updatedExam.blockchainCreated) {
+          throw new Error("Failed to create exam on blockchain");
+        }
+      }
       
       const stakingOpen = await examContract.isStakingOpen(examIdBytes);
       console.log("  - Staking Open:", stakingOpen);

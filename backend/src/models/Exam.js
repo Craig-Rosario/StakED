@@ -80,7 +80,7 @@ const examSchema = new mongoose.Schema(
     },
     ExamStakingAddress: {
       type: String,
-      default: process.env.EXAM_STAKING_ADDRESS || "0x1E4731390cce9955BC21985BB45068A1858703C2",
+      default: process.env.EXAM_STAKING_ADDRESS || "0xa147C9A89f50771A89dD421A614A8570f765a20E",
     },
     feeBps: {
       type: Number,
