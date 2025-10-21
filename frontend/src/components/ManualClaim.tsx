@@ -227,7 +227,8 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
         
         setTimeout(() => {
           onClose();
-          // Force a full page reload to ensure all state is refreshed
+          // Update analytics instead of a full page reload
+          if (window.updateAnalytics) window.updateAnalytics();
           window.location.reload(); 
         }, 2000);
       } else {

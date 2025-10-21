@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog";
+import { useAnalytics } from "../../hooks/useAnalytics";
 import {
   Dialog,
   DialogContent,
@@ -37,24 +38,20 @@ interface StatCardProps {
   title: string;
   value: string;
   subtitle: string;
-  trend: number;
   className?: string;
 }
 
-const StatCard = ({ title, value, subtitle, trend, className = "" }: StatCardProps) => {
+const StatCard = ({ title, value, subtitle, className = "" }: StatCardProps) => {
   return (
-    <div className={`border-4 border-black p-4 bg-white ${className}`}>
+    <div className={`border-4 border-black p-4 bg-white flex flex-col items-center text-center ${className}`}>
       <h3 className="text-sm font-bold text-gray-700 mb-1">{title}</h3>
-      <div className="flex items-center justify-between">
-        <span className="text-xl font-extrabold">{value}</span>
-        <span className={`text-sm font-bold ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {trend >= 0 ? '+' : ''}{trend}%
-        </span>
-      </div>
+      <span className="text-xl font-extrabold mb-1">{value}</span>
       <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
     </div>
   );
 };
+
+
 
 interface StakeInfo {
   hasStaked: boolean;
@@ -70,16 +67,37 @@ export default function UpcomingTestsDashboard() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [examStakeInfo, setExamStakeInfo] = useState<Record<string, StakeInfo>>({});
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalStaked: "0 ETH",
-    activeStakes: 0,
-    winRate: 0,
-    totalEarnings: "0 ETH",
-  });
+  const [userWalletAddress, setUserWalletAddress] = useState("");
+  const [analyticsRefreshTrigger, setAnalyticsRefreshTrigger] = useState(0);
 
+  // Get analytics data
+  const { metrics } = useAnalytics(userWalletAddress, "11155111", analyticsRefreshTrigger);
+
+  // Fetch initial data
   useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Fetch user profile to get wallet address
+        const userResponse = await fetch(`${API_BASE}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.user?.walletAddress) {
+            setUserWalletAddress(userData.user.walletAddress);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
     fetchExams();
-    fetchStats();
+    fetchInitialData();
   }, []);
 
   const fetchStakeInfo = async (examId: string): Promise<StakeInfo> => {
@@ -141,23 +159,6 @@ export default function UpcomingTestsDashboard() {
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-
-      setStats({
-        totalStaked: "0 ETH",
-        activeStakes: 0,
-        winRate: 0,
-        totalEarnings: "0 ETH",
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  };
-
   const handleExamSelect = (exam: Exam) => {
     setSelectedExam(exam);
     setShowModal(true);
@@ -175,6 +176,9 @@ export default function UpcomingTestsDashboard() {
 
   const closeStakeModal = () => {
     setShowStakeModal(false);
+    // Refresh analytics and exam data after staking
+    setAnalyticsRefreshTrigger(prev => prev + 1);
+    fetchExams();
   };
 
   const getExamColor = (status: string) => {
@@ -313,36 +317,45 @@ export default function UpcomingTestsDashboard() {
                   <div className="grid grid-cols-2 gap-4 mb-8">
                     <StatCard 
                       title="Total Staked" 
-                      value={stats.totalStaked}
+                      value={metrics?.totalStaked || "0 PYUSD"}
                       subtitle="Across all tests" 
-                      trend={0}
                     />
                     <StatCard 
-                      title="Active Stakes" 
-                      value={stats.activeStakes.toString()}
-                      subtitle="Pending results" 
-                      trend={0}
+                      title="Stakes Won/Lost" 
+                      value={`${metrics?.totalStakesWon || 0}/${metrics?.totalStakesLost || 0}`}
+                      subtitle="Win/Loss ratio" 
                     />
                     <StatCard 
                       title="Win Rate" 
-                      value={`${stats.winRate}%`}
+                      value={`${metrics?.winRate || 0}%`}
                       subtitle="Success rate" 
-                      trend={stats.winRate}
                     />
                     <StatCard 
-                      title="Total Earned" 
-                      value={stats.totalEarnings}
-                      subtitle="All-time profits" 
-                      trend={0}
+                      title="Total Earnings" 
+                      value={metrics?.totalEarnings || "0 PYUSD"}
+                      subtitle="Net profit/loss" 
                     />
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="font-bold text-gray-800 mb-3">Recent Activity</h4>
-                    <div className="text-center py-8 text-gray-500">
-                      <p>No recent activity</p>
-                      <p className="text-sm">Start staking on exams to see your activity here</p>
-                    </div>
+                    <h4 className="font-bold text-gray-800 mb-3">Recent Results</h4>
+                    {metrics?.examResults && metrics.examResults.length > 0 ? (
+                      <div className="space-y-2">
+                        {metrics.examResults.slice(0, 3).map((result, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 border border-gray-200">
+                            <span className="font-mono text-sm">{result.exam.substring(0, 8)}...</span>
+                            <span className={`font-bold ${result.netReward >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {result.netReward >= 0 ? '+' : ''}{result.netReward.toFixed(2)} PYUSD
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recent activity</p>
+                        <p className="text-sm">Start staking on exams to see your activity here</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

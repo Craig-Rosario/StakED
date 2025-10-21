@@ -25,11 +25,12 @@ interface AnalyticsMetrics {
     totalStakesLost: number;
     winRate: number;
     totalEarnings: string;
+    totalEarningsValue: number; // Added to help with styling based on profit/loss
     classesJoined: number;
     examResults: ExamResult[];
 }
 
-export function useAnalytics(userAddress: string) {
+export function useAnalytics(userAddress: string, chainId: string = "11155111", refreshTrigger?: number) {
     const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export function useAnalytics(userAddress: string) {
         if (userAddress) {
             initializeContract();
         }
-    }, [userAddress]);
+    }, [userAddress, chainId]);
 
     // Fetch analytics data
     useEffect(() => {
@@ -123,44 +124,38 @@ export function useAnalytics(userAddress: string) {
                     }
                 }
 
-                // Then process claim events to determine won/
-                for (const event of stakeEvents) {
-                    if (!("args" in event)) continue; // Narrow to EventLog only
-                    const examId = event.args[0];
-                    const amount = event.args[3];
-                    if (examId && amount) {
-                        totalStaked += BigInt(amount.toString());
-                        examStakes.set(examId.toString(), BigInt(amount.toString()));
-                    }
-                }
+                for (const [examId, stakeAmount] of examStakes.entries()) {
+                    if (processedExams.has(examId)) continue;
 
-                for (const event of claimEvents) {
-                    if (!("args" in event)) continue; // Narrow to EventLog
-                    const examId = event.args[0];
-                    if (!examId || processedExams.has(examId.toString())) continue;
+                    const [examData, hasClaimed, isWinner] = await Promise.all([
+                        stakingContract.getExam(examId),
+                        stakingContract.hasClaimed(examId, userAddress),
+                        stakingContract.isWinner(examId, userAddress),
+                    ]);
 
-                    const stakeAmount = examStakes.get(examId.toString());
-                    if (!stakeAmount) continue;
+                    const finalized = examData.finalized;
 
-                    const isWinner: boolean = await stakingContract.isWinner(examId, userAddress);
+                    if (!finalized) continue; // Skip exams not yet finalized
+
                     if (isWinner) {
                         won++;
                         const reward = stakeAmount * BigInt(2);
                         const netReward = reward - stakeAmount;
                         totalEarnings += netReward;
                         examResults.push({
-                            exam: examId.toString(),
+                            exam: examId,
                             netReward: parseFloat(ethers.formatUnits(netReward, 6)),
                         });
                     } else {
                         lost++;
                         totalEarnings -= stakeAmount;
                         examResults.push({
-                            exam: examId.toString(),
+                            exam: examId,
                             netReward: -parseFloat(ethers.formatUnits(stakeAmount, 6)),
                         });
                     }
-                    processedExams.add(examId.toString());
+
+                    processedExams.add(examId);
                 }
 
 
@@ -199,6 +194,7 @@ export function useAnalytics(userAddress: string) {
                     winRate: Math.round(winRate),
                     totalEarnings: (totalEarnings >= ethers.getBigInt(0) ? '+' : '') +
                         formattedTotalEarnings.toFixed(2) + ' PYUSD',
+                    totalEarningsValue: formattedTotalEarnings,
                     classesJoined: uniqueClasses.size,
                     examResults,
                 });
@@ -215,7 +211,7 @@ export function useAnalytics(userAddress: string) {
         };
 
         fetchAnalytics();
-    }, [stakingContract, userAddress]);
+    }, [stakingContract, userAddress, refreshTrigger]);
 
     return { metrics, isLoading, error };
 }

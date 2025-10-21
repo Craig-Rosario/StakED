@@ -1,18 +1,9 @@
 import { useState, useEffect } from "react";
-import { Wallet, Award, BookOpen, Clock, TrendingUp } from "lucide-react";
+import { Award, BookOpen, TrendingUp, Wallet } from "lucide-react";
 import ManualClaim from "../../components/ManualClaim";
 import { StudentAnalytics } from "../../components/StudentAnalytics";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
-
-interface UserStats {
-  totalStaked: number;
-  activeStakes: number;
-  winRate: number;
-  totalEarnings: number;
-  classesJoined: number;
-  upcomingExams: number;
-}
 
 interface Class {
   _id: string;
@@ -46,14 +37,6 @@ interface ClaimableStake {
 }
 
 export default function StudentDashboard() {
-  const [stats, setStats] = useState<UserStats>({
-    totalStaked: 0,
-    activeStakes: 0,
-    winRate: 0,
-    totalEarnings: 0,
-    classesJoined: 0,
-    upcomingExams: 0,
-  });
   const [userWalletAddress, setUserWalletAddress] = useState<string>("");
   const [chainId] = useState<string>("11155111"); // Sepolia
   const [classes, setClasses] = useState<Class[]>([]);
@@ -63,8 +46,15 @@ export default function StudentDashboard() {
   const [userName, setUserName] = useState("Student");
   const [showManualClaim, setShowManualClaim] = useState(false);
   const [manualClaimData, setManualClaimData] = useState<{contractAddress: string; examId: string} | null>(null);
-  const [claimedRewards, setClaimedRewards] = useState<string[]>([]); // Track successfully claimed exam IDs
   const [showClaimSuccess, setShowClaimSuccess] = useState(false);
+  const [analyticsRefreshTrigger, setAnalyticsRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    // Provide a global function to refresh analytics from anywhere
+    window.updateAnalytics = () => {
+      setAnalyticsRefreshTrigger(prev => prev + 1);
+    };
+  }, []);
   
   // Join Class States
   const [joinFormData, setJoinFormData] = useState({
@@ -117,8 +107,6 @@ export default function StudentDashboard() {
       const data = await response.json();
       
       if (data.success) {
-        // Track successfully claimed reward
-        setClaimedRewards(prev => [...prev, examId]);
         setShowClaimSuccess(true);
         
         // Hide success message after 5 seconds
@@ -126,6 +114,10 @@ export default function StudentDashboard() {
           setShowClaimSuccess(false);
         }, 5000);
         
+        // Update analytics
+        setAnalyticsRefreshTrigger(prev => prev + 1);
+        
+        // Refresh data
         fetchClaimableStakes();
         fetchDashboardData(); 
       } else {
@@ -155,15 +147,17 @@ export default function StudentDashboard() {
         return;
       }
 
+      // Fetch user profile
+      let currentUserName = "Student";
+      let walletAddress = "";
       try {
         const userResponse = await fetch(`${API_BASE}/users/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          const currentUserName = userData.user?.username || "Student";
-          const walletAddress = userData.user?.walletAddress || "";
-          console.log('Wallet address from API:', walletAddress); // Debug log
+          currentUserName = userData.user?.username || "Student";
+          walletAddress = userData.user?.walletAddress || "";
           setUserName(currentUserName);
           setUserWalletAddress(walletAddress);
           setJoinFormData(prev => ({ ...prev, studentName: currentUserName }));
@@ -172,8 +166,10 @@ export default function StudentDashboard() {
         console.error("Error fetching user profile:", error);
       }
 
+      // Fetch claimable stakes
       await fetchClaimableStakes();
 
+      // Fetch classes and their details
       try {
         const classesResponse = await fetch(`${API_BASE}/classes/student`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -205,32 +201,10 @@ export default function StudentDashboard() {
             })
           );
           setClasses(classesWithDetails);
-          
-          setStats(prev => ({
-            ...prev,
-            classesJoined: classesWithDetails.length,
-          }));
         }
       } catch (error) {
         console.error("Error fetching classes:", error);
       }
-
-      try {
-        const examsResponse = await fetch(`${API_BASE}/classes/student/exams`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (examsResponse.ok) {
-          const examsData = await examsResponse.json();
-          const upcomingExamsCount = (examsData.exams || []).length;
-          setStats(prev => ({
-            ...prev,
-            upcomingExams: upcomingExamsCount,
-          }));
-        }
-      } catch (error) {
-        console.error("Error fetching upcoming exams:", error);
-      }
-
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -320,113 +294,9 @@ export default function StudentDashboard() {
 
         {userWalletAddress && (
           <div className="mb-8">
-            <StudentAnalytics userAddress={userWalletAddress} chainId={chainId} />
+            <StudentAnalytics userAddress={userWalletAddress} chainId={chainId} refreshTrigger={analyticsRefreshTrigger} />
           </div>
         )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 border-2 border-black">
-                <Wallet className="w-6 h-6 text-green-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.totalStaked.toFixed(3)} ETH
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Total Staked
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              Across all exams
-            </p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-100 border-2 border-black">
-                <BookOpen className="w-6 h-6 text-blue-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.classesJoined}
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Classes Joined
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              Active enrollments
-            </p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-yellow-100 border-2 border-black">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.upcomingExams}
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Upcoming Exams
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              Ready to stake
-            </p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 border-2 border-black">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.activeStakes}
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Active Stakes
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              Awaiting results
-            </p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 border-2 border-black">
-                <Award className="w-6 h-6 text-green-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.winRate}%
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Win Rate
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              Prediction accuracy
-            </p>
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 border-2 border-black">
-                <Wallet className="w-6 h-6 text-green-600" />
-              </div>
-              <span className="text-2xl font-extrabold text-gray-800">
-                {stats.totalEarnings.toFixed(3)} ETH
-              </span>
-            </div>
-            <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
-              Total Earnings
-            </h3>
-            <p className="font-mono text-gray-500 text-xs mt-1">
-              All-time profits
-            </p>
-          </div>
-        </div>
 
         {showClaimSuccess && (
           <div className="mb-8">

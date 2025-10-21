@@ -14,6 +14,7 @@ interface MetricCardProps {
 interface StudentAnalyticsProps {
   userAddress: string;
   chainId?: string;
+  refreshTrigger?: number;
 }
 
 const MetricCard = ({ label, value, icon, color, description }: MetricCardProps) => (
@@ -37,8 +38,8 @@ const MetricCard = ({ label, value, icon, color, description }: MetricCardProps)
   </div>
 );
 
-export function StudentAnalytics({ userAddress, chainId = "11155111" }: StudentAnalyticsProps) {
-  const { metrics, isLoading, error } = useAnalytics(userAddress);
+export function StudentAnalytics({ userAddress, chainId = "11155111", refreshTrigger }: StudentAnalyticsProps) {
+  const { metrics, isLoading, error } = useAnalytics(userAddress, chainId, refreshTrigger);
   const { openPopup } = useTransactionPopup();
   const { openTxToast } = useNotification();
 
@@ -110,8 +111,8 @@ export function StudentAnalytics({ userAddress, chainId = "11155111" }: StudentA
         <MetricCard 
           label="Total Earnings" 
           value={metrics.totalEarnings}
-          icon={<Wallet className="w-6 h-6 text-yellow-600" />}
-          color="yellow"
+          icon={<Wallet className={`w-6 h-6 ${metrics.totalEarningsValue >= 0 ? 'text-green-600' : 'text-red-600'}`} />}
+          color={metrics.totalEarningsValue >= 0 ? 'green' : 'red'}
           description="Net profit/loss"
         />
         <MetricCard 
