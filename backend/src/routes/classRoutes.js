@@ -192,6 +192,87 @@ router.get("/student/exams", verifyToken, checkRole(["student"]), async (req, re
 });
 
 /**
+ * @route GET /api/classes/student/classmates
+ * @desc Get all classmates for the current student across all their classes
+ * @access Private (student)
+ */
+router.get("/student/classmates", verifyToken, checkRole(["student"]), async (req, res) => {
+  try {
+    // Find all classes the student is enrolled in
+    const studentClasses = await Class.find({ students: req.user.userId })
+      .populate("students", "walletAddress username")
+      .select("name code students")
+      .lean();
+
+    if (!studentClasses.length) {
+      return res.json({
+        success: true,
+        classmates: [],
+        message: "You are not enrolled in any classes yet"
+      });
+    }
+
+    // Collect all classmates with their class information
+    const classmatesMap = new Map();
+    
+    studentClasses.forEach(cls => {
+      cls.students.forEach(student => {
+        // Skip the current user
+        if (student._id.toString() === req.user.userId) return;
+        
+        const studentId = student._id.toString();
+        
+        if (!classmatesMap.has(studentId)) {
+          classmatesMap.set(studentId, {
+            _id: student._id,
+            name: student.username || "Anonymous",
+            walletAddress: student.walletAddress,
+            classes: []
+          });
+        }
+        
+        // Add this class to the student's class list
+        classmatesMap.get(studentId).classes.push({
+          classId: cls._id,
+          className: cls.name,
+          classCode: cls.code
+        });
+      });
+    });
+
+    // Convert map to array and add mock performance data for now
+    const classmates = Array.from(classmatesMap.values()).map((classmate, index) => ({
+      ...classmate,
+      rank: index + 1,
+      avatar: `https://placehold.co/100x100/FFF/333?text=${classmate.name.charAt(0).toUpperCase()}`,
+      winRate: Math.floor(Math.random() * 40) + 40, // Random between 40-80
+      stakes: Math.floor(Math.random() * 100) + 1500, // Random between 1500-1600
+      change: (Math.random() - 0.5) * 10 // Random between -5 and +5
+    }));
+
+    // Sort by win rate for leaderboard effect
+    classmates.sort((a, b) => b.winRate - a.winRate);
+    
+    // Update ranks after sorting
+    classmates.forEach((classmate, index) => {
+      classmate.rank = index + 1;
+    });
+
+    res.json({
+      success: true,
+      classmates,
+      totalClasses: studentClasses.length
+    });
+  } catch (err) {
+    console.error("Error fetching classmates:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error fetching classmates" 
+    });
+  }
+});
+
+/**
  * @route GET /api/classes/:id/exams
  * @desc Get all exams for a specific class
  * @access Private (verifier | teacher | student)

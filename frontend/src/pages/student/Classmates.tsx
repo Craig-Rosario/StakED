@@ -22,130 +22,66 @@ interface Exam {
   canStake: boolean;
 } 
 
-const mockStudents = [
-  {
-    rank: 1,
-    name: "Alice Johnson",
-    address: "0x4A...901",
-    change: 8.4,
-    avatar: "https://placehold.co/100x100/FFF/333?text=AJ",
-    winRate: 85,
-    stakes: 1527
-  },
-  {
-    rank: 2,
-    name: "Bob Smith",
-    address: "0x7B...2C4",
-    change: 6.1,
-    avatar: "https://placehold.co/100x100/FFF/333?text=BS",
-    winRate: 72,
-    stakes: 1528
-  },
-  {
-    rank: 3,
-    name: "Carol Davis",
-    address: "0x9E...5F7",
-    change: 4.8,
-    avatar: "https://placehold.co/100x100/FFF/333?text=CD",
-    winRate: 65,
-    stakes: 1527
-  },
-  {
-    rank: 4,
-    name: "David Wilson",
-    address: "0x2D...8A3",
-    change: -1.2,
-    avatar: "https://placehold.co/100x100/FFF/333?text=DW",
-    winRate: 45,
-    stakes: 1528
-  },
-  {
-    rank: 5,
-    name: "Emma Brown",
-    address: "0x5E...1B6",
-    change: 2.7,
-    avatar: "https://placehold.co/100x100/FFF/333?text=EB",
-    winRate: 78,
-    stakes: 1527
-  },
-  {
-    rank: 6,
-    name: "Frank Miller",
-    address: "0x8F...C9E",
-    change: 1.5,
-    avatar: "https://placehold.co/100x100/FFF/333?text=FM",
-    winRate: 55,
-    stakes: 1528
-  },
-  {
-    rank: 7,
-    name: "Grace Lee",
-    address: "0x3C...7D2",
-    change: 3.2,
-    avatar: "https://placehold.co/100x100/FFF/333?text=GL",
-    winRate: 82,
-    stakes: 1527
-  },
-  {
-    rank: 8,
-    name: "Henry Taylor",
-    address: "0x6A...9F1",
-    change: -0.8,
-    avatar: "https://placehold.co/100x100/FFF/333?text=HT",
-    winRate: 38,
-    stakes: 1528
-  },
-  {
-    rank: 9,
-    name: "Ivy Chen",
-    address: "0x1B...4E8",
-    change: 5.1,
-    avatar: "https://placehold.co/100x100/FFF/333?text=IC",
-    winRate: 91,
-    stakes: 1527
-  },
-  {
-    rank: 10,
-    name: "Jack Martinez",
-    address: "0x9D...2A7",
-    change: 2.3,
-    avatar: "https://placehold.co/100x100/FFF/333?text=JM",
-    winRate: 60,
-    stakes: 1528
-  },
-  {
-    rank: 11,
-    name: "Katie Rodriguez",
-    address: "0x4F...8B5",
-    change: -2.1,
-    avatar: "https://placehold.co/100x100/FFF/333?text=KR",
-    winRate: 42,
-    stakes: 1527
-  },
-  {
-    rank: 12,
-    name: "Leo Anderson",
-    address: "0x7E...3C9",
-    change: 4.5,
-    avatar: "https://placehold.co/100x100/FFF/333?text=LA",
-    winRate: 88,
-    stakes: 1528
-  },
-];
+interface Classmate {
+  _id: string;
+  name: string;
+  walletAddress: string;
+  classes: Array<{
+    classId: string;
+    className: string;
+    classCode: string;
+  }>;
+  rank: number;
+  avatar: string;
+  winRate: number;
+  stakes: number;
+  change: number;
+}
 
 const Classmates = () => {
+  const [classmates, setClassmates] = useState<Classmate[]>([]);
   const [availableExams, setAvailableExams] = useState<Exam[]>([]);
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Classmate | null>(null);
   const [showExamSelection, setShowExamSelection] = useState(false);
   const [showStakeDialog, setShowStakeDialog] = useState(false);
-
-  const topStudents = mockStudents.slice(0, 3);
-  const otherStudents = mockStudents.slice(3);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    fetchClassmates();
     fetchAvailableExams();
   }, []);
+
+  const fetchClassmates = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Please log in to view classmates");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/classes/student/classmates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClassmates(data.classmates || []);
+        if (data.classmates?.length === 0) {
+          setError("No classmates found. Join some classes to see your peers!");
+        }
+      } else {
+        setError("Failed to fetch classmates");
+      }
+    } catch (error) {
+      console.error("Error fetching classmates:", error);
+      setError("Error loading classmates data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAvailableExams = async () => {
     try {
@@ -168,7 +104,7 @@ const Classmates = () => {
     }
   };
 
-  const handleStakeClick = (student: any) => {
+  const handleStakeClick = (student: Classmate) => {
     setSelectedStudent(student);
     setShowExamSelection(true);
   };
@@ -210,6 +146,70 @@ const Classmates = () => {
     return "text-red-600";
   };
 
+  const formatWalletAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-xl font-bold">Loading classmates...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-xl font-bold text-red-600 mb-4">{error}</div>
+            <NeoButton 
+              className="bg-blue-500 text-white px-6 py-2"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </NeoButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (classmates.length === 0) {
+    return (
+      <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
+        <header className="mb-16 md:mb-28 text-center">
+          <h1 className="text-4xl sm:text-4xl md:text-6xl font-black mb-4 tracking-tight">
+            CLASSMATES
+            <br />
+            <span className="text-accent">LEADERBOARD</span>
+          </h1>
+        </header>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="text-xl font-bold mb-4">No classmates found</div>
+            <p className="text-gray-600 mb-4">Join some classes to see your peers and start staking on them!</p>
+            <NeoButton 
+              className="bg-blue-500 text-white px-6 py-2"
+              onClick={() => window.location.href = '/student/join-class'}
+            >
+              Join a Class
+            </NeoButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const topStudents = classmates.slice(0, 3);
+  const otherStudents = classmates.slice(3);
+
   return (
     <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
       <header className="mb-16 md:mb-28 text-center">
@@ -230,6 +230,7 @@ const Classmates = () => {
           <div className="md:order-1 order-2">
             <LeaderboardCard
               {...topStudents[1]}
+              address={formatWalletAddress(topStudents[1].walletAddress)}
               isPodium
               trophyImage={podiumData[1].icon}
               trophyCircleBgClass={podiumData[1].circleBgClass}
@@ -238,6 +239,7 @@ const Classmates = () => {
           <div className="md:order-2 order-1 md:transform md:scale-110 md:-translate-y-8">
             <LeaderboardCard
               {...topStudents[0]}
+              address={formatWalletAddress(topStudents[0].walletAddress)}
               isPodium
               trophyImage={podiumData[0].icon}
               trophyCircleBgClass={podiumData[0].circleBgClass}
@@ -246,6 +248,7 @@ const Classmates = () => {
           <div className="md:order-3 order-3">
             <LeaderboardCard
               {...topStudents[2]}
+              address={formatWalletAddress(topStudents[2].walletAddress)}
               isPodium
               trophyImage={podiumData[2].icon}
               trophyCircleBgClass={podiumData[2].circleBgClass}
@@ -273,7 +276,14 @@ const Classmates = () => {
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-extrabold text-xl text-gray-800 truncate">{student.name}</h3>
-                  <p className="text-sm font-mono text-gray-600 truncate">{student.address}</p>
+                  <p className="text-sm font-mono text-gray-600 truncate">{formatWalletAddress(student.walletAddress)}</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {student.classes.map((cls, index) => (
+                      <span key={index} className="text-xs bg-gray-200 px-2 py-1 rounded text-gray-700">
+                        {cls.className}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
               
@@ -311,7 +321,7 @@ const Classmates = () => {
                           {student.name}'s Performance
                         </DialogTitle>
                         <p className="font-mono text-sm text-gray-600 break-all">
-                          {student.address}
+                          {formatWalletAddress(student.walletAddress)}
                         </p>
                       </div>
                     </DialogHeader>
@@ -390,7 +400,7 @@ const Classmates = () => {
           onClose={closeStakeDialog}
           onSuccess={handleStakeSuccess}
           examId={selectedExam._id}
-          candidateAddress={selectedStudent.address}
+          candidateAddress={selectedStudent.walletAddress}
           candidateName={selectedStudent.name}
         />
       )}
