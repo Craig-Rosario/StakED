@@ -24,6 +24,9 @@ interface ClaimableStake {
   rewardAmount: number;
   predictedMarks: number;
   actualMarks: number;
+  candidateAddress?: string;
+  isWinner: boolean;
+  isClaimed: boolean;
   exam?: {
     _id: string;
     name: string;
@@ -36,11 +39,24 @@ interface ClaimableStake {
   createdAt: string;
 }
 
+interface GroupedClaimableExam {
+  examId: string;
+  examName: string;
+  className: string;
+  classCode: string;
+  maxMarks: number;
+  stakes: ClaimableStake[];
+  totalStakeAmount: number;
+  totalRewardAmount: number;
+  stakeCount: number;
+}
+
 export default function StudentDashboard() {
   const [userWalletAddress, setUserWalletAddress] = useState<string>("");
   const [chainId] = useState<string>("11155111"); // Sepolia
   const [classes, setClasses] = useState<Class[]>([]);
   const [claimableStakes, setClaimableStakes] = useState<ClaimableStake[]>([]);
+  const [groupedClaimableExams, setGroupedClaimableExams] = useState<GroupedClaimableExam[]>([]);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [userName, setUserName] = useState("Student");
@@ -80,10 +96,39 @@ export default function StudentDashboard() {
       if (response.ok) {
         const data = await response.json();
         // Filter for claimable stakes (winner, not claimed, with reward amount)
-        const claimable = (data.stakes || []).filter((stake: any) => 
+        const claimable = (data.stakes || []).filter((stake: ClaimableStake) => 
           stake.isWinner && !stake.isClaimed && stake.rewardAmount > 0
         );
         setClaimableStakes(claimable);
+
+        // Group stakes by exam
+        const groupedByExam = claimable.reduce((groups: Record<string, GroupedClaimableExam>, stake: ClaimableStake) => {
+          const examId = stake.exam?._id;
+          if (!examId) return groups;
+
+          if (!groups[examId]) {
+            groups[examId] = {
+              examId,
+              examName: stake.exam?.name || 'Unknown Exam',
+              className: stake.class?.name || 'Unknown Class',
+              classCode: stake.class?.code || 'N/A',
+              maxMarks: stake.exam?.maxMarks || 100,
+              stakes: [],
+              totalStakeAmount: 0,
+              totalRewardAmount: 0,
+              stakeCount: 0
+            };
+          }
+
+          groups[examId].stakes.push(stake);
+          groups[examId].totalStakeAmount += stake.stakeAmount;
+          groups[examId].totalRewardAmount += stake.rewardAmount;
+          groups[examId].stakeCount += 1;
+
+          return groups;
+        }, {});
+
+        setGroupedClaimableExams(Object.values(groupedByExam));
       }
     } catch (error) {
       console.error("Error fetching claimable stakes:", error);
@@ -318,7 +363,7 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {claimableStakes.length > 0 && (
+        {groupedClaimableExams.length > 0 && (
           <div className="mb-8">
             <div className="bg-gradient-to-r from-green-100 to-yellow-100 border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
               <div className="flex items-center gap-3 mb-4">
@@ -330,32 +375,44 @@ export default function StudentDashboard() {
                     🎉 Claimable Rewards Available!
                   </h2>
                   <p className="font-mono text-gray-600">
-                    You have {claimableStakes.length} reward{claimableStakes.length !== 1 ? 's' : ''} ready to claim
+                    You have {groupedClaimableExams.length} exam{groupedClaimableExams.length !== 1 ? 's' : ''} with claimable rewards
                   </p>
                 </div>
               </div>
               
               <div className="space-y-3">
-                {claimableStakes.map((stake) => (
-                  <div key={stake._id} className="bg-white border-2 border-black p-4 flex items-center justify-between">
+                {groupedClaimableExams.map((examGroup) => (
+                  <div key={examGroup.examId} className="bg-white border-2 border-black p-4 flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-800">{stake.exam?.name || 'Unknown Exam'}</h3>
+                      <h3 className="font-bold text-gray-800">{examGroup.examName}</h3>
                       <p className="text-sm text-gray-600">
-                        Class: {stake.class?.name || 'Unknown Class'} ({stake.class?.code || 'N/A'})
+                        Class: {examGroup.className} ({examGroup.classCode})
                       </p>
                       <p className="text-xs text-gray-500 font-mono">
-                        Predicted: {stake.predictedMarks}/{stake.exam?.maxMarks || 100} | 
-                        Actual: {stake.actualMarks}/{stake.exam?.maxMarks || 100} | 
-                        Staked: {stake.stakeAmount} PYUSD
+                        {examGroup.stakeCount} stake{examGroup.stakeCount !== 1 ? 's' : ''} | 
+                        Total Staked: {examGroup.totalStakeAmount} PYUSD | 
+                        Total Reward: {examGroup.totalRewardAmount} PYUSD
                       </p>
+                      <div className="mt-2 space-y-1">
+                        {examGroup.stakes.map((stake, index) => (
+                          <p key={stake._id} className="text-xs text-gray-400 font-mono">
+                            #{index + 1}: {stake.predictedMarks}/{examGroup.maxMarks} predicted → {stake.actualMarks}/{examGroup.maxMarks} actual (Staked: {stake.stakeAmount} PYUSD)
+                          </p>
+                        ))}
+                      </div>
                     </div>
                     <div className="text-right ml-4">
+                      <div className="mb-2">
+                        <span className="text-2xl font-black text-green-600">
+                          +{examGroup.totalRewardAmount} PYUSD
+                        </span>
+                      </div>
                       <button
-                        onClick={() => stake.exam?._id && handleClaimReward(stake.exam._id)}
-                        disabled={claiming === stake.exam?._id || !stake.exam?._id}
-                        className="mt-2 px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleClaimReward(examGroup.examId)}
+                        disabled={claiming === examGroup.examId}
+                        className="px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {claiming === stake.exam?._id ? "CLAIMING..." : "CLAIM REWARD"}
+                        {claiming === examGroup.examId ? "CLAIMING..." : "CLAIM ALL REWARDS"}
                       </button>
                     </div>
                   </div>
@@ -364,8 +421,8 @@ export default function StudentDashboard() {
               
               <div className="mt-4 p-3 bg-blue-50 border-2 border-blue-300">
                 <p className="text-xs text-blue-800 font-bold">
-                  💡 Rewards are paid in PYUSD directly to your connected wallet. 
-                  Make sure MetaMask is connected to claim.
+                  💡 All your stakes for each exam are claimed together in a single transaction. 
+                  Rewards are paid in PYUSD directly to your connected wallet.
                 </p>
               </div>
             </div>

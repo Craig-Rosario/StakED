@@ -2,6 +2,7 @@ import express from "express";
 import Class from "../models/Class.js";
 import Exam from "../models/Exam.js";
 import User from "../models/User.js";
+import Stake from "../models/Stake.js";
 import { verifyToken, checkRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -212,7 +213,7 @@ router.get("/student/classmates", verifyToken, checkRole(["student"]), async (re
       });
     }
 
-    // Collect all classmates with their class information
+    // Collect all classmates (excluding the current user) with their class information
     const classmatesMap = new Map();
     
     studentClasses.forEach(cls => {
@@ -240,18 +241,37 @@ router.get("/student/classmates", verifyToken, checkRole(["student"]), async (re
       });
     });
 
-    // Convert map to array and add mock performance data for now
-    const classmates = Array.from(classmatesMap.values()).map((classmate, index) => ({
-      ...classmate,
-      rank: index + 1,
-      avatar: `https://placehold.co/100x100/FFF/333?text=${classmate.name.charAt(0).toUpperCase()}`,
-      winRate: Math.floor(Math.random() * 40) + 40, // Random between 40-80
-      stakes: Math.floor(Math.random() * 100) + 1500, // Random between 1500-1600
-      change: (Math.random() - 0.5) * 10 // Random between -5 and +5
-    }));
+    // Calculate real performance metrics for each classmate
+    const classmates = await Promise.all(
+      Array.from(classmatesMap.values()).map(async (classmate) => {
+        // Get all stakes for this student
+        const stakes = await Stake.find({ student: classmate._id }).lean();
+        
+        // Calculate performance metrics
+        const totalStakes = stakes.length;
+        const totalStakeAmount = stakes.reduce((sum, stake) => sum + stake.stakeAmount, 0);
+        const winningStakes = stakes.filter(stake => stake.isWinner === true).length;
+        const winRate = totalStakes > 0 ? Math.round((winningStakes / totalStakes) * 100) : 0;
+        
+        // Calculate recent performance change (mock for now)
+        const recentChange = (Math.random() - 0.5) * 10; // Random between -5 and +5
+        
+        return {
+          ...classmate,
+          avatar: `https://placehold.co/100x100/FFF/333?text=${classmate.name.charAt(0).toUpperCase()}`,
+          winRate,
+          stakes: totalStakeAmount,
+          totalStakes,
+          change: recentChange
+        };
+      })
+    );
 
-    // Sort by win rate for leaderboard effect
-    classmates.sort((a, b) => b.winRate - a.winRate);
+    // Sort by win rate for leaderboard effect, then by total stake amount
+    classmates.sort((a, b) => {
+      if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+      return b.stakes - a.stakes;
+    });
     
     // Update ranks after sorting
     classmates.forEach((classmate, index) => {
@@ -261,7 +281,8 @@ router.get("/student/classmates", verifyToken, checkRole(["student"]), async (re
     res.json({
       success: true,
       classmates,
-      totalClasses: studentClasses.length
+      totalClasses: studentClasses.length,
+      totalClassmates: classmates.length
     });
   } catch (err) {
     console.error("Error fetching classmates:", err);
@@ -475,6 +496,124 @@ router.post("/:id/exams", verifyToken, checkRole(["verifier", "teacher"]), async
       success: false, 
       message: "Failed to create exam", 
       error: err.message 
+    });
+  }
+});
+
+/**
+ * @route GET /api/classes/student/:studentId/performance
+ * @desc Get detailed performance data for a specific student
+ * @access Private (student)
+ */
+router.get("/student/:studentId/performance", verifyToken, checkRole(["student"]), async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    
+    // Verify the requesting student has access to this data (same class)
+    const requestingUserClasses = await Class.find({ students: req.user.userId }).select("_id");
+    const targetUserClasses = await Class.find({ students: studentId }).select("_id");
+    
+    const hasSharedClass = requestingUserClasses.some(reqClass => 
+      targetUserClasses.some(targetClass => 
+        reqClass._id.toString() === targetClass._id.toString()
+      )
+    );
+    
+    if (!hasSharedClass) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Access denied - not in the same class" 
+      });
+    }
+    
+    // Get all stakes for the target student
+    const stakes = await Stake.find({ student: studentId })
+      .populate('exam', 'name examDate')
+      .populate('class', 'name')
+      .sort({ createdAt: 1 })
+      .lean();
+    
+    // Calculate detailed metrics
+    const totalStakes = stakes.length;
+    const totalStakeAmount = stakes.reduce((sum, stake) => sum + stake.stakeAmount, 0);
+    
+    // Calculate wins/losses based on actual performance
+    let wins = 0;
+    let losses = 0;
+    let totalConfidence = 0;
+    const monthlyPerformance = {};
+    
+    stakes.forEach(stake => {
+      totalConfidence += stake.confidence || 0;
+      
+      if (stake.actualScore !== null && stake.predictedMarks !== null) {
+        const scoreDifference = Math.abs(stake.actualScore - stake.predictedMarks);
+        if (scoreDifference <= 5) {
+          wins++;
+        } else {
+          losses++;
+        }
+        
+        // Group by month for chart
+        if (stake.exam && stake.exam.examDate) {
+          const month = new Date(stake.exam.examDate).toLocaleDateString('en', { month: 'short' });
+          if (!monthlyPerformance[month]) {
+            monthlyPerformance[month] = { total: 0, correct: 0 };
+          }
+          monthlyPerformance[month].total++;
+          if (scoreDifference <= 5) {
+            monthlyPerformance[month].correct++;
+          }
+        }
+      }
+    });
+    
+    const avgConfidence = totalStakes > 0 ? (totalConfidence / totalStakes).toFixed(1) : 0;
+    const winRate = totalStakes > 0 ? Math.round((wins / totalStakes) * 100) : 0;
+    
+    // Prepare chart data
+    const chartData = Object.entries(monthlyPerformance).map(([month, data]) => ({
+      month,
+      performance: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0
+    }));
+    
+    // Recent stakes for trend analysis
+    const recentStakes = stakes.slice(-5);
+    const olderStakes = stakes.slice(-10, -5);
+    
+    const recentWinRate = recentStakes.length > 0 ? 
+      (recentStakes.filter(s => s.actualScore !== null && s.predictedMarks !== null && 
+        Math.abs(s.actualScore - s.predictedMarks) <= 5).length / recentStakes.length) * 100 : 0;
+    
+    const olderWinRate = olderStakes.length > 0 ? 
+      (olderStakes.filter(s => s.actualScore !== null && s.predictedMarks !== null && 
+        Math.abs(s.actualScore - s.predictedMarks) <= 5).length / olderStakes.length) * 100 : 0;
+    
+    const trend = recentWinRate >= olderWinRate ? "up" : "down";
+    
+    res.json({
+      success: true,
+      performance: {
+        avgConfidence,
+        totalWins: wins,
+        totalLosses: losses,
+        winRate,
+        chartData: chartData.length > 0 ? chartData : [
+          { month: "No Data", performance: 0 }
+        ],
+        trends: {
+          confidence: trend,
+          wins: trend,
+          losses: trend === "up" ? "down" : "up",
+          winRate: trend
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching student performance:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Error fetching performance data" 
     });
   }
 });

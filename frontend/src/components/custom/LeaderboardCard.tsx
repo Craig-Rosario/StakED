@@ -19,6 +19,7 @@ interface LeaderboardCardProps {
   isPodium?: boolean;
   trophyImage?: React.ReactNode;
   trophyCircleBgClass?: string;
+  onStakeClick?: () => void;
 }
 
 const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
@@ -30,6 +31,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
   isPodium = false,
   trophyImage,
   trophyCircleBgClass,
+  onStakeClick,
 }) => {
   const bgColors: Record<number, string> = {
     1: 'bg-yellow-100',
@@ -64,7 +66,14 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
     </Dialog>
   );
 
-  const stakeButtonWithModal = (
+  const stakeButtonWithModal = onStakeClick ? (
+    <NeoButton 
+      className="bg-red-500 text-white px-4 py-1 text-sm"
+      onClick={onStakeClick}
+    >
+      STAKE
+    </NeoButton>
+  ) : (
     <Dialog>
       <DialogTrigger asChild>
         <NeoButton className="bg-red-500 text-white px-4 py-1 text-sm">STAKE</NeoButton>
