@@ -95,12 +95,7 @@ export function useAnalytics(userAddress: string, chainId: string = "11155111", 
                 const fromBlock = currentBlock - 345600;
 
                 const stakeFilter = stakingContract.filters.Staked(null, userAddress);
-                const claimFilter = stakingContract.filters.Claimed(null, userAddress);
-
-                const [stakeEvents, claimEvents] = await Promise.all([
-                    stakingContract.queryFilter(stakeFilter, fromBlock),
-                    stakingContract.queryFilter(claimFilter, fromBlock)
-                ]);
+                const stakeEvents = await stakingContract.queryFilter(stakeFilter, fromBlock);
 
                 let totalStaked = ethers.getBigInt(0);
                 let won = 0;
@@ -127,9 +122,8 @@ export function useAnalytics(userAddress: string, chainId: string = "11155111", 
                 for (const [examId, stakeAmount] of examStakes.entries()) {
                     if (processedExams.has(examId)) continue;
 
-                    const [examData, hasClaimed, isWinner] = await Promise.all([
+                    const [examData, isWinner] = await Promise.all([
                         stakingContract.getExam(examId),
-                        stakingContract.hasClaimed(examId, userAddress),
                         stakingContract.isWinner(examId, userAddress),
                     ]);
 

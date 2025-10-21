@@ -11,12 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet, DollarSign, AlertCircle } from "lucide-react";
 import { CONTRACT_ADDRESSES } from "@/lib/web3Utils";
-
-const toast = {
-  success: (message: string) => alert(`✅ ${message}`),
-  error: (message: string) => alert(`❌ ${message}`),
-  info: (message: string) => alert(`ℹ️ ${message}`)
-};
+import { useNotification } from "../../hooks/useNotification";
 
 interface IntegratedStakeDialogProps {
   isOpen: boolean;
@@ -35,6 +30,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
   candidateAddress,
   candidateName
 }) => {
+  const { notify } = useNotification();
   const [amount, setAmount] = useState("");
   const [predictedMarks, setPredictedMarks] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
@@ -100,9 +96,9 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       
       await getPyusdBalance(address, provider);
       
-      toast.success("Wallet connected successfully!");
+      // No transaction hash for wallet connection - we'll skip notification here
     } catch (error: any) {
-      toast.error(error.message || "Failed to connect wallet");
+      console.error("Wallet connection failed:", error);
     } finally {
       setLoading(false);
     }
@@ -143,19 +139,28 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
       
       const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
-      toast.info("Staking transaction sent. Waiting for confirmation...");
+      notify({
+        txHash: stakeTx.hash
+      });
       
-      await stakeTx.wait();
+      const receipt = await stakeTx.wait();
+      notify({
+        txHash: receipt.hash
+      });
       
       await getPyusdBalance(walletAddress, provider);
       
-      toast.success(`Successfully staked ${amount} PYUSD on ${candidateName}!`);
       onSuccess();
       onClose();
 
     } catch (error: any) {
       console.error("Staking error:", error);
-      toast.error(error.message || "Failed to complete stake");
+      // Show failed transaction in explorer if we have a hash
+      if (error.transaction?.hash) {
+        notify({
+          txHash: error.transaction.hash
+        });
+      }
       setStep("stake");
     } finally {
       setLoading(false);
@@ -164,18 +169,18 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
   const handleStake = async () => {
     if (!amount || parseFloat(amount) <= 0) {
-      toast.error("Please enter a valid stake amount");
+      console.error("Invalid stake amount");
       return;
     }
 
     if (!predictedMarks || parseFloat(predictedMarks) < 0 || parseFloat(predictedMarks) > 100) {
-      toast.error("Please enter predicted marks between 0-100");
+      console.error("Invalid predicted marks");
       return;
     }
 
     const stakeAmount = parseFloat(amount);
     if (stakeAmount > parseFloat(balance)) {
-      toast.error("Insufficient PYUSD balance");
+      console.error("Insufficient PYUSD balance");
       return;
     }
 
@@ -183,8 +188,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
     setStep("approve");
 
     try {
-      toast.info("Recording stake...");
-      
+      // Start the stake process
       const response = await fetch('http://localhost:4000/api/exams/stake', {
         method: 'POST',
         headers: {
@@ -202,11 +206,11 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.message);
+        console.error("API error:", data.message);
+        return;
       }
 
       setStep("confirm");
-      toast.info("Please confirm the blockchain transaction...");
 
       const provider = new ethers.BrowserProvider(window.ethereum!);
       const signer = await provider.getSigner();
@@ -228,23 +232,26 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const stakeAmountWei = ethers.parseUnits(stakeAmount.toString(), 6);
 
       if (allowance < stakeAmountWei) {
-        toast.info("Approving PYUSD spending...");
         const approveTx = await pyusdContract.approve(EXAM_STAKING_ADDRESS, stakeAmountWei);
+        notify({
+          txHash: approveTx.hash
+        });
         await approveTx.wait();
-        toast.info("Approval confirmed! Now staking...");
       }
 
-      // Execute the actual stake transaction
-      toast.info("Executing stake transaction...");
       const examContract = new ethers.Contract(EXAM_STAKING_ADDRESS, EXAM_ABI, signer);
       const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(data.blockchain.examId));
       const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
       
       const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
-      toast.info("Stake transaction sent. Waiting for confirmation...");
+      notify({
+        txHash: stakeTx.hash
+      });
       
-      await stakeTx.wait();
-      toast.success(`Successfully staked ${stakeAmount} PYUSD on ${candidateName} with ${predictedMarks}% prediction!`);
+      const stakeTxReceipt = await stakeTx.wait();
+      notify({
+        txHash: stakeTxReceipt.hash
+      });
       
       // Update balance after successful stake
       await getPyusdBalance(walletAddress, provider);
@@ -256,7 +263,12 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
     } catch (error: any) {
       console.error("Staking error:", error);
-      toast.error(error.message || "Failed to complete stake");
+      // Show failed transaction in explorer if we have a hash
+      if (error.transaction?.hash) {
+        notify({
+          txHash: error.transaction.hash
+        });
+      }
       setStep("stake");
     } finally {
       setLoading(false);

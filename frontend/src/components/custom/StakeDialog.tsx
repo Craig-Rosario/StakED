@@ -4,18 +4,13 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Wallet, DollarSign, AlertCircle } from "lucide-react";
-
-const toast = {
-  success: (message: string) => alert(`✅ ${message}`),
-  error: (message: string) => alert(`❌ ${message}`),
-  info: (message: string) => alert(`ℹ️ ${message}`)
-};
+import { useNotification } from "../../hooks/useNotification";
 
 interface StakeDialogProps {
   isOpen: boolean;
@@ -51,6 +46,7 @@ export default function StakeDialog({
   targetName,
   examId
 }: StakeDialogProps) {
+  const { notify } = useNotification();
   const [amount, setAmount] = useState("");
   const [predictedScore, setPredictedScore] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +57,7 @@ export default function StakeDialog({
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        toast.error("Please install MetaMask to continue");
+        console.error("MetaMask not installed");
         return;
       }
 
@@ -77,22 +73,19 @@ export default function StakeDialog({
       const balance = await pyusdContract.balanceOf(address);
       const decimals = await pyusdContract.decimals();
       setPyusdBalance(ethers.formatUnits(balance, decimals));
-
-      toast.success("Wallet connected successfully!");
     } catch (error: any) {
       console.error("Wallet connection failed:", error);
-      toast.error("Failed to connect wallet");
     }
   };
 
   const approveAndStake = async () => {
     if (!walletConnected || !amount || parseFloat(amount) <= 0) {
-      toast.error("Please enter a valid stake amount");
+      console.error("Invalid stake amount");
       return;
     }
     
     if (!predictedScore || parseFloat(predictedScore) < 0 || parseFloat(predictedScore) > 100) {
-      toast.error("Please enter a valid predicted score (0-100)");
+      console.error("Invalid predicted score");
       return;
     }
 
@@ -107,17 +100,18 @@ export default function StakeDialog({
       const balance = await pyusdContract.balanceOf(userAddress);
       
       if (balance < stakeAmount) {
-        toast.error("Insufficient PYUSD balance");
+        console.error("Insufficient PYUSD balance");
         return;
       }
 
       const currentAllowance = await pyusdContract.allowance(userAddress, EXAM_STAKING_ADDRESS);
       
       if (currentAllowance < stakeAmount) {
-        toast.info("Approving PYUSD spending...");
         const approveTx = await pyusdContract.approve(EXAM_STAKING_ADDRESS, stakeAmount);
-        await approveTx.wait();
-        toast.success("PYUSD spending approved!");
+        const approveTxReceipt = await approveTx.wait();
+        notify({
+          txHash: approveTxReceipt.hash
+        });
       }
 
       const examStakingContract = new ethers.Contract(EXAM_STAKING_ADDRESS, EXAM_STAKING_ABI, signer);
@@ -133,16 +127,27 @@ export default function StakeDialog({
         stakeTx = await examStakingContract.stake(examIdBytes, targetId, stakeAmount, predictedScoreInt);
       }
 
-      toast.info("Processing stake transaction...");
-      await stakeTx.wait();
-
-      toast.success(`Successfully staked ${amount} PYUSD on ${targetName} with ${predictedScore}% prediction!`);
+      const stakeTxReceipt = await stakeTx.wait();
+      console.log("Transaction confirmed, receipt:", stakeTxReceipt);
+      
+      notify({
+        txHash: stakeTxReceipt.hash,
+        comment: `Staked ${amount} PYUSD on ${predictedScore}%`
+      });
+      console.log("Notification triggered for hash:", stakeTxReceipt.hash);
+      
       onSuccess();
       onClose();
       
     } catch (error: any) {
       console.error("Staking failed:", error);
-      toast.error(error.message || "Staking failed. Please try again.");
+      // For failed transactions, we still want to show the transaction in the explorer
+      if (error.transaction?.hash) {
+        console.log("Showing notification for failed transaction:", error.transaction.hash);
+        notify({
+          txHash: error.transaction.hash
+        });
+      }
     } finally {
       setIsLoading(false);
     }
