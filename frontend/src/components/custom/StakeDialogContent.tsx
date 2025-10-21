@@ -48,16 +48,16 @@ const StakeDialogContent: React.FC<StakeDialogContentProps> = ({
       });
 
       if (response.ok) {
-        alert(`Successfully staked ${stakeAmount} PYUSD on ${stakeTargetName}!`);
+        // We can't show a notification here since it's not a blockchain transaction
+        // Instead we'll rely on the UI state changes
         onStakeSuccess?.();
         onClose?.();
       } else {
         const error = await response.json();
-        alert(`Failed to place stake: ${error.message}`);
+        console.error('Stake failed:', error.message);
       }
     } catch (err) {
       console.error('Stake submission failed:', err);
-      alert('Failed to place stake. Please try again.');
     } finally {
       setIsLoading(false);
     }
