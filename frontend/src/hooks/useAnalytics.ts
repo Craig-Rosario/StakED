@@ -93,10 +93,7 @@ export function useAnalytics(
 
         let totalStaked = 0n;
         let totalEarnings = 0n;
-        let won = 0;
-        let lost = 0;
         const finals = new Map<string, string[]>();
-        const examResults: ExamResult[] = [];
         let userStakeCount = 0;
 
         for (const log of logs) {
@@ -146,10 +143,39 @@ export function useAnalytics(
         console.log("📈 User stakes found:", userStakeCount);
         console.log("🏁 Finalized exams:", finals.size);
 
-        // Process real exam results only
-        for (const [examId, winners] of finals.entries()) {
-          // Check if user participated in this exam by looking through stakes
-          let userParticipated = false;
+        // Calculate win rate history with immutable historical data
+        const calculateWinRateHistory = async () => {
+          console.log("📊 Starting IMMUTABLE win rate history calculation");
+          
+          // Get stored historical data
+          const storageKey = `winRateHistory_${userAddress.toLowerCase()}`;
+          let storedHistory: WinRateDataPoint[] = [];
+          
+          try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+              storedHistory = JSON.parse(stored);
+              console.log("� Loaded stored history:", storedHistory.length, "points");
+            }
+          } catch (error) {
+            console.warn("⚠️ Failed to load stored history:", error);
+          }
+          
+          // Create a set of already processed exam IDs to prevent duplicates
+          const processedExamIds = new Set(storedHistory.map(point => point.examId));
+          console.log("🔍 Already processed exams:", Array.from(processedExamIds));
+          
+          // Find new exams that haven't been processed yet
+          const newExamPoints: Array<{ 
+            timestamp: number; 
+            won: boolean; 
+            examId: string;
+            blockNumber: string;
+          }> = [];
+          
+          // Get all user stakes with timestamps
+          const userStakes = new Map<string, { timestamp: number; blockNumber: string }>();
+          
           for (const log of logs) {
             if (!Array.isArray(log.topics)) continue;
             
@@ -165,154 +191,140 @@ export function useAnalytics(
             
             if (parsed?.name === "Staked") {
               const staker = parsed.args.staker as string;
-              const stakeExamId = parsed.args.examId as string;
-              if (staker.toLowerCase() === userAddress.toLowerCase() && stakeExamId === examId) {
-                userParticipated = true;
-                break;
+              const examId = parsed.args.examId as string;
+              
+              if (staker.toLowerCase() === userAddress.toLowerCase()) {
+                const blockNumber = log.blockNumber || "0x0";
+                const timestamp = await getBlockTimestamp(blockNumber);
+                
+                userStakes.set(examId, { timestamp, blockNumber });
               }
             }
           }
           
-          if (userParticipated) {
-            if (winners.includes(userAddress.toLowerCase())) {
-              won++;
-              examResults.push({
-                exam: `Exam ${examId.slice(0, 8)}...`,
-                netReward: 2.0 // Estimate - actual rewards come from Claimed events
+          // Check for new finalized exams
+          for (const [examId, winners] of finals.entries()) {
+            // Skip if already processed
+            if (processedExamIds.has(examId.slice(0, 10) + '...')) {
+              continue;
+            }
+            
+            // Only include if user participated
+            if (userStakes.has(examId)) {
+              const stakeInfo = userStakes.get(examId)!;
+              const userWon = winners.includes(userAddress.toLowerCase());
+              
+              newExamPoints.push({
+                timestamp: stakeInfo.timestamp,
+                won: userWon,
+                examId,
+                blockNumber: stakeInfo.blockNumber
               });
-            } else {
-              lost++;
-              examResults.push({
-                exam: `Exam ${examId.slice(0, 8)}...`, 
-                netReward: -1.0 // Lost stake
+              
+              console.log("🆕 NEW EXAM FOUND:", {
+                examId: examId.slice(0, 10) + '...',
+                result: userWon ? 'WON' : 'LOST',
+                date: new Date(stakeInfo.timestamp * 1000).toLocaleString()
               });
             }
           }
-        }
-
-        // Calculate win rate history over time
-        const calculateWinRateHistory = async () => {
-          console.log("📊 Starting win rate history calculation with REAL Blockscout data");
-          console.log("💼 User stake count:", userStakeCount);
-          console.log("🏁 Finals processed:", finals.size);
-          console.log("📋 Total logs from Blockscout:", logs.length);
           
-          const winRateHistory: WinRateDataPoint[] = [];
+          // Sort new exams chronologically
+          newExamPoints.sort((a, b) => a.timestamp - b.timestamp);
           
-          // Only process if we have real blockchain activity
-          if (finals.size > 0 && userStakeCount > 0) {
-            console.log("🎯 Processing real blockchain data");
-            
-            // Create a map to track user's exam participation by timestamp
-            const userExamHistory = new Map<string, { timestamp: number; won: boolean }>();
-            
-            // Go through logs again to get timestamps for user's staked exams
-            for (const log of logs) {
-              if (!Array.isArray(log.topics)) continue;
-              
-              let parsed: ethers.LogDescription | null = null;
-              try {
-                parsed = iface.parseLog({
-                  topics: log.topics.filter(Boolean),
-                  data: log.data || "0x",
-                });
-              } catch {
-                continue;
-              }
-              
-              if (!parsed) continue;
-              
-              // Track when user staked in exams
-              if (parsed.name === "Staked") {
-                const staker = parsed.args.staker as string;
-                const examId = parsed.args.examId as string;
-                if (staker.toLowerCase() === userAddress.toLowerCase()) {
-                  // Get real timestamp from Blockscout block data
-                  const blockNumber = log.blockNumber || "0x0";
-                  const timestamp = await getBlockTimestamp(blockNumber);
-                  
-                  userExamHistory.set(examId, { 
-                    timestamp, 
-                    won: false // Will be updated when we check finals
-                  });
-                  
-                  console.log("📅 Found user stake in real blockchain data:", {
-                    examId: examId.slice(0, 10) + "...",
-                    date: new Date(timestamp * 1000).toLocaleString(),
-                    blockNumber
-                  });
-                }
-              }
-            }
-            
-            // Update with win/loss information from finals
-            for (const [examId, winners] of finals.entries()) {
-              if (userExamHistory.has(examId)) {
-                const exam = userExamHistory.get(examId)!;
-                exam.won = winners.includes(userAddress.toLowerCase());
-              }
-            }
-            
-            // Create individual data points for each exam (not grouped)
-            const examPoints: Array<{ timestamp: number; won: boolean; examId: string }> = [];
-            
-            for (const [examId, exam] of userExamHistory.entries()) {
-              // Only include finalized exams
-              if (finals.has(examId)) {
-                examPoints.push({
-                  timestamp: exam.timestamp,
-                  won: exam.won,
-                  examId
-                });
-              }
-            }
-            
-            // Sort chronologically by timestamp
-            examPoints.sort((a, b) => a.timestamp - b.timestamp);
-            
-            // Create data points for each exam with running win rate
-            let cumulativeWon = 0;
-            let cumulativeTotal = 0;
-            
-            for (let i = 0; i < examPoints.length; i++) {
-              const exam = examPoints[i];
-              cumulativeTotal += 1;
-              if (exam.won) cumulativeWon += 1;
-              
-              const date = new Date(exam.timestamp * 1000);
-              const dateStr = date.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-              
-              const cumulativeWinRate = Math.round((cumulativeWon / cumulativeTotal) * 100);
-              
-              winRateHistory.push({
-                date: dateStr,
-                winRate: cumulativeWinRate,
-                period: `Exam ${i + 1}`,
-                stakesWon: cumulativeWon,
-                stakesTotal: cumulativeTotal,
-                examResult: exam.won ? 'WON' : 'LOST',
-                examId: exam.examId.slice(0, 10) + '...'
-              });
-              
-              console.log(`📊 Point ${i + 1}: ${exam.won ? 'WON' : 'LOST'} - Running WR: ${cumulativeWinRate}%`);
-            }
-            
-            console.log("📈 Real win rate history:", winRateHistory);
-            return winRateHistory;
-          } else {
-            console.log("ℹ️ No real blockchain data available for win rate history");
-            console.log("💡 User needs to participate in more exams to see win rate trends");
-            return [];
+          if (newExamPoints.length === 0) {
+            console.log("✅ No new exams to add, using stored history");
+            return storedHistory;
           }
+          
+          console.log("🔄 Adding", newExamPoints.length, "new exam(s) to history");
+          
+          // Create combined history with new points
+          const allPoints = [...storedHistory];
+          
+          // Add new points and recalculate running win rate from the point where we add new data
+          let cumulativeWon = storedHistory.length > 0 ? storedHistory[storedHistory.length - 1].stakesWon : 0;
+          let cumulativeTotal = storedHistory.length > 0 ? storedHistory[storedHistory.length - 1].stakesTotal : 0;
+          
+          for (const newPoint of newExamPoints) {
+            cumulativeTotal += 1;
+            if (newPoint.won) cumulativeWon += 1;
+            
+            const date = new Date(newPoint.timestamp * 1000);
+            const dateStr = date.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            
+            const cumulativeWinRate = Math.round((cumulativeWon / cumulativeTotal) * 100);
+            
+            const newDataPoint: WinRateDataPoint = {
+              date: dateStr,
+              winRate: cumulativeWinRate,
+              period: `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+              stakesWon: cumulativeWon,
+              stakesTotal: cumulativeTotal,
+              examResult: newPoint.won ? 'WON' : 'LOST',
+              examId: newPoint.examId.slice(0, 10) + '...'
+            };
+            
+            allPoints.push(newDataPoint);
+            
+            console.log(`➕ Added point: ${newPoint.won ? 'WON ✅' : 'LOST ❌'} - Running WR: ${cumulativeWinRate}% (${cumulativeWon}/${cumulativeTotal})`);
+          }
+          
+          // Save updated history to localStorage
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(allPoints));
+            console.log("� Saved updated history to localStorage");
+          } catch (error) {
+            console.warn("⚠️ Failed to save history:", error);
+          }
+          
+          // Sort final result by timestamp to ensure chronological order
+          allPoints.sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            return dateA - dateB;
+          });
+          
+          console.log("📈 FINAL IMMUTABLE history:", allPoints.length, "points");
+          return allPoints;
         };
 
         const winRateHistory = await calculateWinRateHistory();
         console.log("📊 Final win rate history for chart:", winRateHistory);
+        
+        // Calculate analytics metrics from the immutable win rate history
+        let won = 0;
+        let lost = 0;
+        const examResults: ExamResult[] = [];
+        
+        // Use the immutable history to calculate consistent metrics
+        for (const point of winRateHistory) {
+          if (point.examResult === 'WON') {
+            won++;
+            examResults.push({
+              exam: `Exam ${point.examId}`,
+              netReward: 2.0 // Estimate - actual rewards come from Claimed events
+            });
+          } else if (point.examResult === 'LOST') {
+            lost++;
+            examResults.push({
+              exam: `Exam ${point.examId}`, 
+              netReward: -1.0 // Lost stake
+            });
+          }
+        }
+        
+        console.log("📊 Analytics calculated from immutable history:", {
+          totalWon: won,
+          totalLost: lost,
+          totalExams: won + lost,
+          historyPoints: winRateHistory.length
+        });
         
         const totalProcessed = won + lost;
         const winRate = totalProcessed > 0 ? (won / totalProcessed) * 100 : 0;
