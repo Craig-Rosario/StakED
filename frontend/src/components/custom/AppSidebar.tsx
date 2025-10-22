@@ -12,13 +12,13 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { ChartLine, CalendarDays, LogOut, Users, User } from "lucide-react";
+import { ChartLine, CalendarDays, LogOut, Users, User, ReceiptText } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 export const AppSidebar = () => {
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "upcomingTest" | "classmates"
+    "dashboard" | "upcomingTest" | "classmates" | "transactions"
   >("dashboard");
   const [userName, setUserName] = useState("Student");
   const [userAddress, setUserAddress] = useState("0x00...000");
@@ -42,10 +42,8 @@ export const AppSidebar = () => {
       if (response.ok) {
         const data = await response.json();
         setUserName(data.user.username || "Student");
-        
-        // Use actual wallet address from user data
+
         if (data.user.walletAddress) {
-          // Format the address to show first 4 and last 3 characters
           const formatted = `${data.user.walletAddress.slice(0, 6)}...${data.user.walletAddress.slice(-3)}`;
           setUserAddress(formatted);
         } else {
@@ -57,9 +55,12 @@ export const AppSidebar = () => {
     }
   };
 
-  const handleNavigate = (tab: "dashboard" | "upcomingTest" | "classmates", route: string) => {
+  const handleNavigate = (
+    tab: "dashboard" | "upcomingTest" | "classmates" | "transactions",
+    route?: string
+  ) => {
     setActiveTab(tab);
-    navigate(route);
+    if (route) navigate(route);
   };
 
   const handleLogout = () => {
@@ -79,8 +80,8 @@ export const AppSidebar = () => {
             <p className="text-xs font-mono text-gray-600 truncate">{userAddress}</p>
           </div>
         </div>
-        
-        <SidebarMenuButton 
+
+        <SidebarMenuButton
           onClick={handleLogout}
           className="w-full mt-3 px-3 py-2 flex gap-2 justify-center text-sm border-2 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100 cursor-pointer"
         >
@@ -99,15 +100,17 @@ export const AppSidebar = () => {
       <SidebarHeader className="p-[14px] flex justify-center">
         <h1 className="text-2xl tracking-tighter">
           <span className="hidden font-extrabold group-data-[state=expanded]:block">
-            Stak<span className="text-[#FF4C4C]">E</span><span className="text-[#01a72a]">D</span>
+            Stak<span className="text-[#FF4C4C]">E</span>
+            <span className="text-[#01a72a]">D</span>
           </span>
           <span className="hidden font-mono group-data-[state=expanded]:block text-sm text-gray-500">
             Student Confidence Market
           </span>
           <span
             className=" group-data-[state=collapsed]:flex
-    group-data-[state=collapsed]:justify-center
-    group-data-[state=collapsed]:items-center font-extrabold  item group-data-[state=expanded]:hidden "
+              group-data-[state=collapsed]:justify-center
+              group-data-[state=collapsed]:items-center font-extrabold  
+              group-data-[state=expanded]:hidden "
           >
             SK
           </span>
@@ -128,7 +131,7 @@ export const AppSidebar = () => {
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center cursor-pointer`}
+                group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <ChartLine className="w-6 h-6" />
               <span>My Analytics</span>
@@ -137,9 +140,7 @@ export const AppSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() =>
-                handleNavigate("upcomingTest", "/user/upcoming")
-              }
+              onClick={() => handleNavigate("upcomingTest", "/user/upcoming")}
               isActive={activeTab === "upcomingTest"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
                 transition-transform hover:scale-100
@@ -149,7 +150,7 @@ export const AppSidebar = () => {
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center cursor-pointer`}
+                group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <CalendarDays className="w-6 h-6" />
               <span>Upcoming Tests</span>
@@ -167,11 +168,30 @@ export const AppSidebar = () => {
                     ? "bg-blue-500 text-white"
                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
-                 gap-3 group-data-[state=collapsed]:gap-0
-  group-data-[state=collapsed]:justify-center cursor-pointer`}
+                gap-3 group-data-[state=collapsed]:gap-0
+                group-data-[state=collapsed]:justify-center cursor-pointer`}
             >
               <Users className="w-6 h-6" />
               <span>Classmates</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => handleNavigate("transactions","/user/transaction")}
+              isActive={activeTab === "transactions"}
+              className={`px-4 py-3 flex text-lg border-4 border-black font-bold
+                transition-transform hover:scale-100
+                ${
+                  activeTab === "transactions"
+                    ? "bg-blue-500 text-white"
+                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                }
+                gap-3 group-data-[state=collapsed]:gap-0
+                group-data-[state=collapsed]:justify-center cursor-pointer`}
+            >
+              <ReceiptText className="w-6 h-6" />
+              <span>View Transactions</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -184,7 +204,7 @@ export const AppSidebar = () => {
         <div className="group-data-[state=expanded]:hidden">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton 
+              <SidebarMenuButton
                 onClick={handleLogout}
                 className="px-4 py-3 flex gap-3 justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100 cursor-pointer"
               >

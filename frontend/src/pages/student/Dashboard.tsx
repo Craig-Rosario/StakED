@@ -337,11 +337,11 @@ export default function StudentDashboard() {
           </p>
         </div>
 
-        {userWalletAddress && (
-          <div className="mb-8">
-            <StudentAnalytics userAddress={userWalletAddress} chainId={chainId} refreshTrigger={analyticsRefreshTrigger} />
-          </div>
-        )}
+          {userWalletAddress && (
+            <div className="mb-8">
+              <StudentAnalytics userAddress={userWalletAddress} chainId={chainId} refreshTrigger={analyticsRefreshTrigger} />
+            </div>
+          )}
 
         {showClaimSuccess && (
           <div className="mb-8">
@@ -410,7 +410,7 @@ export default function StudentDashboard() {
                       <button
                         onClick={() => handleClaimReward(examGroup.examId)}
                         disabled={claiming === examGroup.examId}
-                        className="px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-2 bg-green-500 text-white border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         {claiming === examGroup.examId ? "CLAIMING..." : "CLAIM ALL REWARDS"}
                       </button>

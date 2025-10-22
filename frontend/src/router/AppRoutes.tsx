@@ -13,6 +13,7 @@ import VerifierClasses from "@/pages/verifier/VerifierClasses";
 import VerifierClassesDetails from "@/pages/verifier/VerifierClassesDetails";
 import IntegratedCreateExam from "@/pages/verifier/IntegratedCreateExam";
 import GradeExam from "@/pages/verifier/GradeExam";
+import Transaction from "@/pages/student/Transactions"
 
 export default function AppRoutes() {
   return (
@@ -25,6 +26,7 @@ export default function AppRoutes() {
         <Route path="/user/dashboard" element={<Dashboard />} />
         <Route path="/user/upcoming" element={<Upcoming />} />
         <Route path="/user/classmates" element={<ClassmatesPage />} />
+        <Route path="/user/transaction" element={<Transaction />} />
       </Route>
 
       {/* Verifier Routes */}
