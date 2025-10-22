@@ -133,22 +133,7 @@ export function StudentAnalytics({
         ))}
       </div>
 
-      <div className="flex justify-end">
-        <Button
-          variant="neutral"
-          onClick={() => {
-            if (chainId && userAddress) {
-              openPopup?.({ chainId, address: userAddress });
-              openTxToast?.(
-                "View Transactions",
-                "Opening transaction history..."
-              );
-            }
-          }}
-        >
-          View Transactions
-        </Button>
-      </div>
+      
     </div>
   );
 }
