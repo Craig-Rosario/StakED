@@ -7,10 +7,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import PerformanceDashboard from "@/components/custom/PerformanceDialog";
-import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog"; 
+import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog";
+import ClassmateAnalyticsDialog from "@/components/custom/ClassmateAnalyticsDialog";
+import { useClassmateAnalytics } from "../../hooks/useClassmateAnalytics"; 
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
@@ -46,8 +46,13 @@ const Classmates = () => {
   const [selectedStudent, setSelectedStudent] = useState<Classmate | null>(null);
   const [showExamSelection, setShowExamSelection] = useState(false);
   const [showStakeDialog, setShowStakeDialog] = useState(false);
+  const [showAnalyticsDialog, setShowAnalyticsDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Get all wallet addresses for analytics
+  const walletAddresses = classmates.map(c => c.walletAddress);
+  const { analytics, isLoading: analyticsLoading, error: analyticsError } = useClassmateAnalytics(walletAddresses);
 
   useEffect(() => {
     fetchClassmates();
@@ -208,8 +213,27 @@ const Classmates = () => {
     );
   }
 
+  // Create enhanced classmates with real analytics data
+  const enhancedClassmates = classmates.map(classmate => {
+    const analyticsData = analytics[classmate.walletAddress];
+    const totalStaked = analyticsData?.totalStaked || "0.00 PYUSD";
+    const numericStaked = parseFloat(totalStaked.replace(" PYUSD", "")) || 0;
+    const stakesWon = analyticsData?.totalStakesWon || 0;
+    const stakesLost = analyticsData?.totalStakesLost || 0;
+    
+    return {
+      ...classmate,
+      winRate: analyticsData ? analyticsData.winRate : 0,
+      stakes: numericStaked,
+      totalStakes: stakesWon + stakesLost,
+      totalStakesWon: stakesWon,
+      totalStakesLost: stakesLost,
+      totalEarnings: analyticsData ? analyticsData.totalEarningsValue : 0,
+    };
+  });
+
   // Sort all students by winRate descending for podium
-  const sortedStudents = [...classmates].sort((a, b) => b.winRate - a.winRate);
+  const sortedStudents = [...enhancedClassmates].sort((a, b) => b.winRate - a.winRate);
   const topStudents = sortedStudents.slice(0, 3);
   const otherStudents = sortedStudents.slice(3);
 
@@ -221,11 +245,21 @@ const Classmates = () => {
           <br />
           <span className="text-accent">LEADERBOARD</span>
         </h1>
-        <div className="inline-block bg-card border-4 border-border rounded-xl px-3 sm:px-5 py-1 shadow-[4px_4px_0px_0px_hsl(var(--border))]">
+        <div className="inline-block bg-card border-4 border-border rounded-xl px-3 sm:px-5 py-1 shadow-[4px_4px_0px_0px_hsl(var(--border))] mb-2">
           <p className="text-base sm:text-md font-bold">
             🏆 Top Performing Students 🏆
           </p>
         </div>
+        {analyticsLoading && (
+          <div className="text-sm text-blue-600 font-bold animate-pulse">
+            📊 Loading analytics data...
+          </div>
+        )}
+        {analyticsError && (
+          <div className="text-sm text-red-600 font-bold">
+            ⚠️ {analyticsError}
+          </div>
+        )}
       </header>
 
       {/* Top Performers Podium */}
@@ -239,8 +273,17 @@ const Classmates = () => {
             {topStudents.length >= 2 && (
               <div className="md:order-1 order-2">
                 <LeaderboardCard
-                  {...topStudents[1]}
+                  rank={2}
+                  name={topStudents[1].name}
                   address={formatWalletAddress(topStudents[1].walletAddress)}
+                  walletAddress={topStudents[1].walletAddress}
+                  avatar={topStudents[1].avatar}
+                  winRate={topStudents[1].winRate}
+                  stakes={topStudents[1].stakes}
+                  totalStakes={topStudents[1].totalStakes}
+                  totalStakesWon={topStudents[1].totalStakesWon}
+                  totalStakesLost={topStudents[1].totalStakesLost}
+                  analyticsData={analytics[topStudents[1].walletAddress]}
                   isPodium
                   trophyImage={podiumData[1].icon}
                   trophyCircleBgClass={podiumData[1].circleBgClass}
@@ -250,8 +293,17 @@ const Classmates = () => {
             )}
             <div className={`${topStudents.length >= 2 ? 'md:order-2 order-1 md:transform md:scale-110 md:-translate-y-8' : ''}`}>
               <LeaderboardCard
-                {...topStudents[0]}
+                rank={1}
+                name={topStudents[0].name}
                 address={formatWalletAddress(topStudents[0].walletAddress)}
+                walletAddress={topStudents[0].walletAddress}
+                avatar={topStudents[0].avatar}
+                winRate={topStudents[0].winRate}
+                stakes={topStudents[0].stakes}
+                totalStakes={topStudents[0].totalStakes}
+                totalStakesWon={topStudents[0].totalStakesWon}
+                totalStakesLost={topStudents[0].totalStakesLost}
+                analyticsData={analytics[topStudents[0].walletAddress]}
                 isPodium
                 trophyImage={podiumData[0].icon}
                 trophyCircleBgClass={podiumData[0].circleBgClass}
@@ -261,12 +313,21 @@ const Classmates = () => {
             {topStudents.length >= 3 && (
               <div className="md:order-3 order-3">
                 <LeaderboardCard
-                  {...topStudents[2]}
+                  rank={3}
+                  name={topStudents[2].name}
                   address={formatWalletAddress(topStudents[2].walletAddress)}
-                  isPodium
-                  trophyImage={podiumData[2].icon}
-                  trophyCircleBgClass={podiumData[2].circleBgClass}
-                  onStakeClick={() => handleStakeClick(topStudents[2])}
+                  walletAddress={topStudents[2].walletAddress}
+                  avatar={topStudents[2].avatar}
+                  winRate={topStudents[2].winRate}
+                stakes={topStudents[2].stakes}
+                totalStakes={topStudents[2].totalStakes}
+                totalStakesWon={topStudents[2].totalStakesWon}
+                totalStakesLost={topStudents[2].totalStakesLost}
+                analyticsData={analytics[topStudents[2].walletAddress]}
+                isPodium
+                trophyImage={podiumData[2].icon}
+                trophyCircleBgClass={podiumData[2].circleBgClass}
+                onStakeClick={() => handleStakeClick(topStudents[2])}
                 />
               </div>
             )}
@@ -314,41 +375,22 @@ const Classmates = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-gray-600 uppercase">TOTAL STAKED</p>
-                    <p className="text-xl font-black text-gray-800">{student.stakes} PYUSD</p>
+                    <p className="text-xl font-black text-gray-800">
+                      {student.stakes ? student.stakes.toFixed(2) : '0.00'} PYUSD
+                    </p>
                     <p className="text-xs text-gray-500">{student.totalStakes} stakes</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <NeoButton className="flex-1 bg-blue-400 py-3 text-base text-white cursor-pointer">
-                        VIEW
-                      </NeoButton>
-                    </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-4xl bg-gray-50 border-4 border-black shadow-[8px_8px_0px_#000] rounded-lg max-h-[90vh] overflow-y-auto overflow-x-hidden p-6">
-                      <DialogHeader className="flex flex-col sm:flex-row items-center justify-center relative space-y-0 mb-4 pt-4">
-                        <div className="absolute left-0 top-0 sm:static sm:flex-shrink-0 mb-2 sm:mb-0">
-                          <img
-                            src={student.avatar}
-                            alt={student.name}
-                            className="w-14 h-14 rounded-full border-4 border-black"
-                          />
-                        </div>
-                        <div className="flex-grow text-center">
-                          <DialogTitle className="text-2xl font-black mt-12 md:mt-0">
-                            {student.name}'s Performance
-                          </DialogTitle>
-                          <p className="font-mono text-sm text-gray-600 break-all">
-                            {formatWalletAddress(student.walletAddress)}
-                          </p>
-                        </div>
-                      </DialogHeader>
-                      <PerformanceDashboard 
-                        studentId={student._id} 
-                        studentName={student.name}
-                      />
-                    </DialogContent>
-                  </Dialog>
+                  <NeoButton 
+                    className="flex-1 bg-blue-400 py-3 text-base text-white cursor-pointer"
+                    onClick={() => {
+                      setSelectedStudent(student);
+                      setShowAnalyticsDialog(true);
+                    }}
+                  >
+                    VIEW
+                  </NeoButton>
                   <NeoButton 
                     className="flex-1 bg-red-500 py-3 text-base text-white cursor-pointer"
                     onClick={() => handleStakeClick(student)}
@@ -423,6 +465,18 @@ const Classmates = () => {
           examId={selectedExam._id}
           candidateAddress={selectedStudent.walletAddress}
           candidateName={selectedStudent.name}
+        />
+      )}
+
+      {selectedStudent && (
+        <ClassmateAnalyticsDialog
+          isOpen={showAnalyticsDialog}
+          onClose={() => {
+            setShowAnalyticsDialog(false);
+            setSelectedStudent(null);
+          }}
+          studentName={selectedStudent.name}
+          walletAddress={selectedStudent.walletAddress}
         />
       )}
     </div>

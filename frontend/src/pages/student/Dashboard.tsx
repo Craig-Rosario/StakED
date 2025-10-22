@@ -53,7 +53,7 @@ interface GroupedClaimableExam {
 
 export default function StudentDashboard() {
   const [userWalletAddress, setUserWalletAddress] = useState<string>("");
-  const [chainId] = useState<string>("11155111"); // Sepolia
+  const [chainId] = useState<string>("11155111"); 
   const [classes, setClasses] = useState<Class[]>([]);
   const [claimableStakes, setClaimableStakes] = useState<ClaimableStake[]>([]);
   const [groupedClaimableExams, setGroupedClaimableExams] = useState<GroupedClaimableExam[]>([]);
@@ -66,13 +66,11 @@ export default function StudentDashboard() {
   const [analyticsRefreshTrigger, setAnalyticsRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    // Provide a global function to refresh analytics from anywhere
     window.updateAnalytics = () => {
       setAnalyticsRefreshTrigger(prev => prev + 1);
     };
   }, []);
   
-  // Join Class States
   const [joinFormData, setJoinFormData] = useState({
     classCode: "",
     studentName: "",
@@ -95,13 +93,11 @@ export default function StudentDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        // Filter for claimable stakes (winner, not claimed, with reward amount)
         const claimable = (data.stakes || []).filter((stake: ClaimableStake) => 
           stake.isWinner && !stake.isClaimed && stake.rewardAmount > 0
         );
         setClaimableStakes(claimable);
 
-        // Group stakes by exam
         const groupedByExam = claimable.reduce((groups: Record<string, GroupedClaimableExam>, stake: ClaimableStake) => {
           const examId = stake.exam?._id;
           if (!examId) return groups;
@@ -154,15 +150,12 @@ export default function StudentDashboard() {
       if (data.success) {
         setShowClaimSuccess(true);
         
-        // Hide success message after 5 seconds
         setTimeout(() => {
           setShowClaimSuccess(false);
         }, 5000);
         
-        // Update analytics
         setAnalyticsRefreshTrigger(prev => prev + 1);
         
-        // Refresh data
         fetchClaimableStakes();
         fetchDashboardData(); 
       } else {
@@ -192,7 +185,6 @@ export default function StudentDashboard() {
         return;
       }
 
-      // Fetch user profile
       let currentUserName = "Student";
       let walletAddress = "";
       try {
@@ -211,10 +203,8 @@ export default function StudentDashboard() {
         console.error("Error fetching user profile:", error);
       }
 
-      // Fetch claimable stakes
       await fetchClaimableStakes();
 
-      // Fetch classes and their details
       try {
         const classesResponse = await fetch(`${API_BASE}/classes/student`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -537,7 +527,6 @@ export default function StudentDashboard() {
               Recent Activity
             </h2>
             
-            {/* No recent activities for now */}
             <div className="text-center py-8">
               <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 font-mono mb-2">No recent activity</p>

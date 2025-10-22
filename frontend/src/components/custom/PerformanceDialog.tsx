@@ -68,7 +68,6 @@ export default function PerformanceDashboard({ studentId, studentName }: Perform
     if (studentId) {
       fetchPerformanceData();
     } else {
-      // Fallback to static data if no studentId provided
       setPerformanceData({
         avgConfidence: "0",
         totalWins: 0,
@@ -116,10 +115,16 @@ export default function PerformanceDashboard({ studentId, studentName }: Perform
 
   const stats = [
     { 
-      label: "AVG CONFIDENCE", 
+      label: "WIN RATE", 
       value: `${performanceData.avgConfidence}%`, 
       trend: performanceData.trends.confidence, 
       bgColor: "bg-yellow-100" 
+    },
+    { 
+      label: "TOTAL EARNINGS", 
+      value: `${performanceData.winRate}%`, 
+      trend: performanceData.trends.winRate, 
+      bgColor: "bg-blue-100" 
     },
     { 
       label: "TOTAL STAKES WON", 
@@ -133,17 +138,10 @@ export default function PerformanceDashboard({ studentId, studentName }: Perform
       trend: performanceData.trends.losses, 
       bgColor: "bg-red-100" 
     },
-    { 
-      label: "WIN RATE", 
-      value: `${performanceData.winRate}%`, 
-      trend: performanceData.trends.winRate, 
-      bgColor: "bg-yellow-100" 
-    },
   ];
 
   return (
     <div className="p-1 sm:p-2">
-      {/* Student Name Header */}
       {studentName && (
         <div className="text-center mb-4">
           <h3 className="text-lg font-bold text-gray-800">
@@ -152,7 +150,6 @@ export default function PerformanceDashboard({ studentId, studentName }: Perform
         </div>
       )}
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 mb-6">
         {stats.map((stat, i) => (
           <div
@@ -174,7 +171,6 @@ export default function PerformanceDashboard({ studentId, studentName }: Perform
         ))}
       </div>
 
-      {/* Performance Chart */}
       <div className="border-4 border-black p-4 shadow-[8px_8px_0px_#000] bg-white">
         <p className="text-sm font-bold mb-2 text-gray-800">Performance Over Time</p>
         {performanceData.chartData.length > 0 && performanceData.chartData[0].month !== "No Data" ? (
