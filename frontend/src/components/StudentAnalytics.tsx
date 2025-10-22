@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { Wallet, Award, BookOpen, TrendingUp } from "lucide-react";
+import WinRateChart from "./custom/WinRateChart";
 
 interface MetricCardProps {
   label: string;
@@ -133,6 +134,13 @@ export function StudentAnalytics({
         ))}
       </div>
 
+      {/* Win Rate Chart */}
+      {!isLoading && metrics?.winRateHistory && (
+        <WinRateChart 
+          data={metrics.winRateHistory} 
+          className="col-span-full"
+        />
+      )}
       
     </div>
   );
