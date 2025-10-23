@@ -293,16 +293,21 @@ export default function TransactionPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-800 font-bold">
-                            {txn.stakeAmount}
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-gray-800">
+                                {txn.stakeAmount}
+                              </span>
+                              <img src="/images/pyusd.png" alt="PYUSD" className="w-5 h-5" />
+                            </div>
                           </td>
-                          <td
-                            className={`px-4 py-3 font-bold ${txn.rewardAmount > 0
-                              ? "text-green-600"
-                              : "text-gray-500"
-                              }`}
-                          >
-                            {txn.rewardAmount}
+                          <td className="px-4 py-3">
+                            <div className={`flex items-center gap-2 ${txn.rewardAmount > 0 ? "text-green-600" : "text-gray-500"}`}>
+                              <span className="text-lg font-bold">
+                                {txn.rewardAmount}
+                              </span>
+                              <img src="/images/pyusd.png" alt="PYUSD" className="w-5 h-5" />
+                            </div>
                           </td>
                           <td className="px-4 py-3 font-bold">
                             {txn.isWinner ? (

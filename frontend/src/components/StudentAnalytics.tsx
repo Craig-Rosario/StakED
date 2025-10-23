@@ -3,13 +3,7 @@ import { useNotification, useTransactionPopup } from "@blockscout/app-sdk";
 import { Button } from "./ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "../hooks/useAnalytics";
-import {
-  Wallet,
-  Award,
-  BookOpen,
-  TrendingUp,
-  History,
-} from "lucide-react";
+import { Wallet, Award, BookOpen, TrendingUp, History } from "lucide-react";
 import WinRateChart from "./custom/WinRateChart";
 import BlockscoutLogo from "/images/BlockScoutLogo.png";
 
@@ -107,8 +101,8 @@ export function StudentAnalytics({
     {
       label: "Total Staked",
       value: metrics?.totalStaked ?? "--",
-      icon: <Wallet className="w-6 h-6 text-green-600" />,
-      color: "green",
+      icon: <img src="/images/pyusd.png" alt="PYUSD" className="w-8 h-8" />,
+      color: "gray",
       description: "Across all exams",
     },
     {
@@ -156,7 +150,7 @@ export function StudentAnalytics({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-md border border-gray-300">
         <img
           src={BlockscoutLogo}
           alt="Blockscout Logo"
