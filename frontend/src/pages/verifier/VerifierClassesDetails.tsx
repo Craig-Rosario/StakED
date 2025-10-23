@@ -139,7 +139,7 @@ const VerifierClassesDetails = () => {
       const data = await response.json();
 
       if (data.success) {
-        alert(`✅ Exam created successfully!\n\nBlockchain Integration: ${data.exam.blockchainCreated ? 'Enabled' : 'Failed'}\nStaking starts immediately for students.`);
+        alert(`Exam created successfully!\nStaking starts immediately for students.`);
         window.location.reload();
       } else {
         throw new Error(data.message);

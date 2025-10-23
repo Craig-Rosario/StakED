@@ -1,15 +1,36 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Blocks, CircleHelp, Home, Wallet } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { loginWithMetaMaskAsVerifier } from "@/lib/web3Auth";
 
 export default function LandingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const scrollToSection = (id: string) => {
     const section = document.getElementById(id);
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
       setIsOpen(false);
+    }
+  };
+
+  const handleVerifierLogin = async () => {
+    try {
+      setLoading(true);
+
+      const loggedUser = await loginWithMetaMaskAsVerifier();
+
+      // Always navigate to verifier dashboard since this is specifically for verifiers
+      navigate("/verifier/dashboard");
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "MetaMask login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,9 +69,11 @@ export default function LandingNavbar() {
 
         <Button
           className="hidden md:flex bg-[#00A2FF] text-white border-4 border-black font-bold uppercase rounded-md hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all cursor-pointer"
-        // onClick={() => handleNavigate("login")}
+          onClick={handleVerifierLogin}
+          disabled={loading}
         >
-          <Wallet className="w-4 h-4" />Connect Wallet
+          <Wallet className="w-4 h-4" />
+          {loading ? "Connecting..." : "Verifier Access"}
         </Button>
 
         {/* Mobile Menu Button */}
@@ -85,9 +108,10 @@ export default function LandingNavbar() {
 
           <Button
             className="w-full bg-[#00A2FF] text-white border-4 border-black font-bold uppercase rounded-md"
-          // onClick={() => handleNavigate("login")}
+            onClick={handleVerifierLogin}
+            disabled={loading}
           >
-            Connect Wallet
+            {loading ? "Connecting..." : "Verifier Access"}
           </Button>
         </div>
       )}

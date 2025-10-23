@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Wallet, DollarSign, AlertCircle } from "lucide-react";
+import { Wallet, AlertCircle } from "lucide-react";
 import { CONTRACT_ADDRESSES } from "@/lib/web3Utils";
 import { useNotification } from "../../hooks/useNotification";
 
@@ -329,9 +329,9 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Stake Amount (PYUSD)</Label>
+              <Label htmlFor="amount">Stake Amount (PYUSD)
+                <img src="/images/pyusd.png" alt="PYUSD" className="w-4 h-4" /></Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
                 <Input
                   id="amount"
                   type="number"
@@ -409,7 +409,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
         return (
           <div className="space-y-4 text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-              <DollarSign className="w-8 h-8 text-blue-600" />
+              <img src="/images/pyusd.png" alt="PYUSD" className="w-12 h-12" />
             </div>
             <h3 className="text-lg font-semibold">Confirm Stake</h3>
             <p className="text-gray-600">
