@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import IntegratedStakeDialog from "@/components/custom/IntegratedStakeDialog";
+import { CircleLoader } from "@/components/ui/circle-loader";
 import { useAnalytics } from "../../hooks/useAnalytics";
 import {
   Dialog,
@@ -38,14 +39,21 @@ interface StatCardProps {
   title: string;
   value: string;
   subtitle: string;
+  loading?: boolean;
   className?: string;
 }
 
-const StatCard = ({ title, value, subtitle, className = "" }: StatCardProps) => {
+const StatCard = ({ title, value, subtitle, loading = false, className = "" }: StatCardProps) => {
   return (
     <div className={`border-4 border-black p-4 bg-white flex flex-col items-center text-center ${className}`}>
       <h3 className="text-sm font-bold text-gray-700 mb-1">{title}</h3>
-      <span className="text-xl font-extrabold mb-1">{value}</span>
+      {loading ? (
+        <div className="mb-1">
+          <CircleLoader size="md" variant="primary" />
+        </div>
+      ) : (
+        <span className="text-xl font-extrabold mb-1">{value}</span>
+      )}
       <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
     </div>
   );
@@ -73,33 +81,6 @@ export default function UpcomingTestsDashboard() {
   // Get analytics data
   const { metrics } = useAnalytics(userWalletAddress, "11155111", analyticsRefreshTrigger);
 
-  // Fetch initial data
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        // Fetch user profile to get wallet address
-        const userResponse = await fetch(`${API_BASE}/users/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (userData.user?.walletAddress) {
-            setUserWalletAddress(userData.user.walletAddress);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-
-    fetchExams();
-    fetchInitialData();
-  }, []);
-
   const fetchStakeInfo = async (examId: string): Promise<StakeInfo> => {
     try {
       const token = localStorage.getItem("token");
@@ -124,7 +105,7 @@ export default function UpcomingTestsDashboard() {
     return { hasStaked: false, totalStakeAmount: 0, averagePredictedGrade: 0, stakeCount: 0 };
   };
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -157,7 +138,34 @@ export default function UpcomingTestsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Fetch user profile to get wallet address
+        const userResponse = await fetch(`${API_BASE}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.user?.walletAddress) {
+            setUserWalletAddress(userData.user.walletAddress);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchInitialData();
+    fetchExams();
+  }, [fetchExams]);
 
   const handleExamSelect = (exam: Exam) => {
     setSelectedExam(exam);
@@ -195,8 +203,9 @@ export default function UpcomingTestsDashboard() {
     return (
       <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <CircleLoader size="xl" variant="primary" className="mx-auto mb-4" />
           <p className="font-mono text-gray-600">Loading exams...</p>
+          <p className="text-sm text-gray-500 mt-1">Fetching upcoming tests and analytics</p>
         </div>
       </div>
     );
@@ -318,22 +327,26 @@ export default function UpcomingTestsDashboard() {
                     <StatCard 
                       title="Total Staked" 
                       value={metrics?.totalStaked || "0 PYUSD"}
-                      subtitle="Across all tests" 
+                      subtitle="Across all tests"
+                      loading={!userWalletAddress || !metrics}
                     />
                     <StatCard 
                       title="Stakes Won/Lost" 
                       value={`${metrics?.totalStakesWon || 0}/${metrics?.totalStakesLost || 0}`}
-                      subtitle="Win/Loss ratio" 
+                      subtitle="Win/Loss ratio"
+                      loading={!userWalletAddress || !metrics}
                     />
                     <StatCard 
                       title="Win Rate" 
                       value={`${metrics?.winRate || 0}%`}
-                      subtitle="Success rate" 
+                      subtitle="Success rate"
+                      loading={!userWalletAddress || !metrics}
                     />
                     <StatCard 
                       title="Total Earnings" 
                       value={metrics?.totalEarnings || "0 PYUSD"}
-                      subtitle="Net profit/loss" 
+                      subtitle="Net profit/loss"
+                      loading={!userWalletAddress || !metrics}
                     />
                   </div>
                 </div>
