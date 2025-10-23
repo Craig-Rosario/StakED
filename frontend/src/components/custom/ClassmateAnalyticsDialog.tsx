@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Wallet, Award, TrendingUp, TrendingDown, Loader2 } from "lucide-react";
 import { useClassmateAnalytics } from "../../hooks/useClassmateAnalytics";
+import WinRateChart from "./WinRateChart";
 
 interface ClassmateAnalyticsDialogProps {
   isOpen: boolean;
@@ -134,67 +135,11 @@ export default function ClassmateAnalyticsDialog({
               />
             </div>
 
-            <div className="border-4 border-black p-6 bg-gradient-to-r from-yellow-100 to-yellow-200 shadow-[6px_6px_0px_#000]">
-              <div className="text-center">
-                <h3 className="text-lg font-bold text-gray-700 mb-2">TOTAL EARNINGS</h3>
-                <div className={`text-4xl font-black ${getEarningsColor(studentAnalytics.totalEarningsValue)}`}>
-                  {studentAnalytics.totalEarnings}
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {studentAnalytics.totalEarningsValue >= 0 ? "📈 Net Profit" : "📉 Net Loss"}
-                </p>
-              </div>
-            </div>
 
-            <div className="border-4 border-black p-6 bg-gray-50 shadow-[6px_6px_0px_#000]">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Performance Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-bold text-gray-700 mb-2">Staking Activity</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>Total Exams Participated:</span>
-                      <span className="font-bold">{studentAnalytics.totalStakesWon + studentAnalytics.totalStakesLost}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Success Rate:</span>
-                      <span className={`font-bold ${getWinRateColor(studentAnalytics.winRate)}`}>
-                        {studentAnalytics.winRate}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-bold text-gray-700 mb-2">Financial Performance</h4>
-                  <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>Total Invested:</span>
-                      <span className="font-bold">{studentAnalytics.totalStaked}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Net Return:</span>
-                      <span className={`font-bold ${getEarningsColor(studentAnalytics.totalEarningsValue)}`}>
-                        {studentAnalytics.totalEarnings}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>ROI:</span>
-                      <span className={`font-bold ${
-                        parseFloat(studentAnalytics.totalStaked) > 0 
-                          ? getEarningsColor((studentAnalytics.totalEarningsValue / parseFloat(studentAnalytics.totalStaked)) * 100)
-                          : "text-gray-600"
-                      }`}>
-                        {parseFloat(studentAnalytics.totalStaked) > 0 
-                          ? `${((studentAnalytics.totalEarningsValue / parseFloat(studentAnalytics.totalStaked)) * 100).toFixed(1)}%`
-                          : "N/A"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Win Rate Chart */}
+            {studentAnalytics.winRateHistory && studentAnalytics.winRateHistory.length > 0 && (
+              <WinRateChart data={studentAnalytics.winRateHistory} className="w-full" />
+            )}
 
             <div className="border-4 border-black p-4 bg-white shadow-[6px_6px_0px_#000]">
               <div className="text-center">
