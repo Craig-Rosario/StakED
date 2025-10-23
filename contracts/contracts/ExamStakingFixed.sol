@@ -191,24 +191,48 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
             revert("No winners - stakes sent to staked bank");
         }
         
-        // REMOVED: Check if user is a winner - this was the bug!
-        // The old buggy code checked if the USER was a winner, but we need to check
-        // if the user has stakes on ANY winners, not if the user themselves won.
+        // Check if user is a winner (for self-staking claims)
+        bool isUserWinner = false;
+        for (uint256 i = 0; i < winners.length; i++) {
+            if (winners[i] == msg.sender) {
+                isUserWinner = true;
+                break;
+            }
+        }
+        
+        // Calculate user's stake on winning candidates (for multistaking)
+        uint256 userWinnerStake = _getUserWinnerStake(e, msg.sender);
+        
+        // User can claim if they are a winner OR if they have stakes on winning candidates
+        require(isUserWinner || userWinnerStake > 0, "No winning stake or not a winner");
         
         // Calculate user's proportional reward
         (uint256 totalWinnerStake, uint256 totalLoserStake) = _calculateStakeTotals(e);
-        uint256 userWinnerStake = _getUserWinnerStake(e, msg.sender);
-        
-        require(userWinnerStake > 0, "No winning stake");
         
         uint256 finalAmount;
-        if (totalLoserStake == 0) {
-            // Everyone won - just return original stake
-            finalAmount = userWinnerStake;
+        
+        if (isUserWinner) {
+            // User won - they get their full stake back plus proportional rewards
+            if (totalLoserStake == 0) {
+                // Everyone won - just return original stake
+                finalAmount = userStake;
+            } else {
+                // Proportional distribution: finalAmount = userStake + reward_share
+                uint256 rewardShare = (userWinnerStake * totalLoserStake) / totalWinnerStake;
+                finalAmount = userWinnerStake + rewardShare;
+            }
+        } else if (userWinnerStake > 0) {
+            // User didn't win but has stakes on winners (multistaking)
+            if (totalLoserStake == 0) {
+                // Everyone won - return just the winning stakes
+                finalAmount = userWinnerStake;
+            } else {
+                // Proportional distribution for multistaking
+                uint256 rewardShare = (userWinnerStake * totalLoserStake) / totalWinnerStake;
+                finalAmount = userWinnerStake + rewardShare;
+            }
         } else {
-            // Proportional distribution: finalAmount = winnerStake + reward_share
-            uint256 rewardShare = (userWinnerStake * totalLoserStake) / totalWinnerStake;
-            finalAmount = userWinnerStake + rewardShare;
+            revert("No valid claim");
         }
 
         pyusd.safeTransfer(msg.sender, finalAmount);
