@@ -8,6 +8,16 @@ const EXAM_STAKING_ABI = [
   "event Claimed(bytes32 indexed examId, address indexed staker, uint256 payout)"
 ];
 
+interface WinRateDataPoint {
+  date: string;
+  winRate: number;
+  period: string;
+  stakesWon: number;
+  stakesTotal: number;
+  examResult?: string; // 'WON' or 'LOST'
+  examId?: string; // Short exam ID
+}
+
 interface ClassmateAnalytics {
   walletAddress: string;
   totalStaked: string;
@@ -16,6 +26,7 @@ interface ClassmateAnalytics {
   winRate: number;
   totalEarnings: string;
   totalEarningsValue: number;
+  winRateHistory?: WinRateDataPoint[];
 }
 
 const BLOCKSCOUT_BASE_URL = import.meta.env.VITE_BLOCKSCOUT_BASE_URL;
@@ -96,6 +107,7 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
             let won = 0;
             let lost = 0;
             const finals = new Map<string, string[]>();
+            const userStakedExams = new Set<string>(); // Track exams where user staked
 
             for (const log of logs) {
               if (!Array.isArray(log.topics)) continue;
@@ -114,10 +126,12 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
 
               if (parsed.name === "Staked") {
                 const staker = parsed.args.staker as string;
+                const examId = parsed.args.examId as string;
                 const amount = BigInt(parsed.args.amount.toString());
                 
                 if (staker.toLowerCase() === lowerAddress) {
                   totalStaked += amount;
+                  userStakedExams.add(examId); // Track this exam
                 }
               }
 
@@ -137,13 +151,48 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
               }
             }
 
-            for (const [, winners] of finals.entries()) {
-              if (winners.includes(lowerAddress)) {
-                won++;
-              } else {
-                lost++;
+            // Only count wins/losses for exams where the user actually staked
+            for (const [examId, winners] of finals.entries()) {
+              if (userStakedExams.has(examId)) {
+                if (winners.includes(lowerAddress)) {
+                  won++;
+                } else {
+                  lost++;
+                }
               }
             }
+
+            // Generate win rate history for charts
+            const winRateHistory: WinRateDataPoint[] = [];
+            let runningWon = 0;
+            let runningTotal = 0;
+
+            // Create a sorted list of finalized exams where user staked
+            const userFinalizedExams = Array.from(finals.entries())
+              .filter(([examId]) => userStakedExams.has(examId))
+              .map(([examId, winners]) => ({
+                examId,
+                won: winners.includes(lowerAddress),
+                shortId: examId.slice(0, 10) + '...'
+              }));
+
+            // Calculate running win rate for each exam
+            userFinalizedExams.forEach((exam, index) => {
+              runningTotal++;
+              if (exam.won) runningWon++;
+
+              const runningWinRate = Math.round((runningWon / runningTotal) * 100);
+
+              winRateHistory.push({
+                date: `Exam ${index + 1}`,
+                winRate: runningWinRate,
+                period: `Exam ${index + 1}`,
+                stakesWon: runningWon,
+                stakesTotal: runningTotal,
+                examResult: exam.won ? 'WON' : 'LOST',
+                examId: exam.shortId
+              });
+            });
 
             const totalProcessed = won + lost;
             const winRate = totalProcessed > 0 ? (won / totalProcessed) * 100 : 0;
@@ -158,6 +207,7 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
               winRate: Math.round(winRate),
               totalEarnings: `${formattedEarnings >= 0 ? "+" : ""}${formattedEarnings.toFixed(2)} PYUSD`,
               totalEarningsValue: formattedEarnings,
+              winRateHistory: winRateHistory,
             };
           }
 

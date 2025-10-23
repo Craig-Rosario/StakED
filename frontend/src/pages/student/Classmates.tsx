@@ -477,6 +477,7 @@ const Classmates = () => {
           }}
           studentName={selectedStudent.name}
           walletAddress={selectedStudent.walletAddress}
+          analyticsData={analytics[selectedStudent.walletAddress]}
         />
       )}
     </div>
