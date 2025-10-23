@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import StakedLogo from "/StakedLogo.png"
 
 import { ChartLine, CalendarDays, LogOut, Users, User, ReceiptText } from "lucide-react";
 
@@ -112,7 +113,11 @@ export const AppSidebar = () => {
               group-data-[state=collapsed]:items-center font-extrabold  
               group-data-[state=expanded]:hidden "
           >
-            SK
+            <img
+              src={StakedLogo}
+              alt="Blockscout Logo"
+              className="w-8 h-8 object-contain"
+            />
           </span>
         </h1>
       </SidebarHeader>
@@ -125,10 +130,9 @@ export const AppSidebar = () => {
               isActive={activeTab === "dashboard"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
                 transition-transform hover:scale-100
-                ${
-                  activeTab === "dashboard"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                ${activeTab === "dashboard"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
                 group-data-[state=collapsed]:justify-center cursor-pointer`}
@@ -144,10 +148,9 @@ export const AppSidebar = () => {
               isActive={activeTab === "upcomingTest"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
                 transition-transform hover:scale-100
-                ${
-                  activeTab === "upcomingTest"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                ${activeTab === "upcomingTest"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
                 group-data-[state=collapsed]:justify-center cursor-pointer`}
@@ -163,10 +166,9 @@ export const AppSidebar = () => {
               isActive={activeTab === "classmates"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold
                 transition-transform hover:scale-100
-                ${
-                  activeTab === "classmates"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                ${activeTab === "classmates"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
                 group-data-[state=collapsed]:justify-center cursor-pointer`}
@@ -178,14 +180,13 @@ export const AppSidebar = () => {
 
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => handleNavigate("transactions","/user/transaction")}
+              onClick={() => handleNavigate("transactions", "/user/transaction")}
               isActive={activeTab === "transactions"}
               className={`px-4 py-3 flex text-lg border-4 border-black font-bold
                 transition-transform hover:scale-100
-                ${
-                  activeTab === "transactions"
-                    ? "bg-blue-500 text-white"
-                    : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                ${activeTab === "transactions"
+                  ? "bg-blue-500 text-white"
+                  : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
                 }
                 gap-3 group-data-[state=collapsed]:gap-0
                 group-data-[state=collapsed]:justify-center cursor-pointer`}
