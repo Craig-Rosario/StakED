@@ -336,27 +336,6 @@ export default function UpcomingTestsDashboard() {
                       subtitle="Net profit/loss" 
                     />
                   </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-bold text-gray-800 mb-3">Recent Results</h4>
-                    {metrics?.examResults && metrics.examResults.length > 0 ? (
-                      <div className="space-y-2">
-                        {metrics.examResults.slice(0, 3).map((result, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 border border-gray-200">
-                            <span className="font-mono text-sm">{result.exam.substring(0, 8)}...</span>
-                            <span className={`font-bold ${result.netReward >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {result.netReward >= 0 ? '+' : ''}{result.netReward.toFixed(2)} PYUSD
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No recent activity</p>
-                        <p className="text-sm">Start staking on exams to see your activity here</p>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>

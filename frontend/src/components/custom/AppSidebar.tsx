@@ -97,7 +97,7 @@ export const AppSidebar = () => {
       collapsible="icon"
       className="bg-white dark:bg-zinc-900 text-black dark:text-white border-r-4 border-black"
     >
-      <SidebarHeader className="p-[14px] flex justify-center">
+      <SidebarHeader className="p-[2px] flex justify-center group-data-[state=collapsed]:p-[12px]">
         <h1 className="text-2xl tracking-tighter">
           <span className="hidden font-extrabold group-data-[state=expanded]:block">
             Stak<span className="text-[#FF4C4C]">E</span>

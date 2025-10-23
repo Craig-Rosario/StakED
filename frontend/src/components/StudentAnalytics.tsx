@@ -150,13 +150,13 @@ export function StudentAnalytics({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-md border border-gray-300">
+      <div className="flex items-center gap-2 bg-transparent rounded-md border border-transparent">
         <img
           src={BlockscoutLogo}
           alt="Blockscout Logo"
           className="w-8 h-8 object-contain"
         />
-        <p className="text-md text-gray-600 font-mono">
+        <p className="text-lg text-gray-600 font-mono">
           Analytics Powered by <span className="font-semibold">Blockscout</span>
         </p>
       </div>
