@@ -94,6 +94,8 @@ export function useAnalytics(
         let totalStaked = 0n;
         let totalEarnings = 0n;
         const finals = new Map<string, string[]>();
+        const userStakes = new Map<string, bigint>(); // Track user stakes per exam
+        const userClaims = new Map<string, bigint>(); // Track user claims per exam
         let userStakeCount = 0;
 
         for (const log of logs) {
@@ -113,11 +115,15 @@ export function useAnalytics(
 
           if (parsed.name === "Staked") {
             const staker = parsed.args.staker as string;
+            const examId = parsed.args.examId as string;
             const amount = BigInt(parsed.args.amount.toString());
             if (staker.toLowerCase() === userAddress.toLowerCase()) {
               totalStaked += amount;
               userStakeCount++;
-              console.log("💰 User stake found:", ethers.formatUnits(amount, 6), "PYUSD");
+              // Track stake amount per exam for accurate loss calculation
+              const currentStake = userStakes.get(examId) || 0n;
+              userStakes.set(examId, currentStake + amount);
+              console.log("💰 User stake found:", ethers.formatUnits(amount, 6), "PYUSD", "Exam:", examId.slice(0, 10) + '...');
             }
           }
 
@@ -132,10 +138,14 @@ export function useAnalytics(
 
           else if (parsed.name === "Claimed") {
             const staker = parsed.args.staker as string;
+            const examId = parsed.args.examId as string;
             const payout = BigInt(parsed.args.payout.toString());
             if (staker.toLowerCase() === userAddress.toLowerCase()) {
               totalEarnings += payout;
-              console.log("💸 User claim found:", ethers.formatUnits(payout, 6), "PYUSD");
+              // Track claim amount per exam for accurate win calculation
+              const currentClaim = userClaims.get(examId) || 0n;
+              userClaims.set(examId, currentClaim + payout);
+              console.log("💸 User claim found:", ethers.formatUnits(payout, 6), "PYUSD", "Exam:", examId.slice(0, 10) + '...');
             }
           }
         }
@@ -173,8 +183,8 @@ export function useAnalytics(
             blockNumber: string;
           }> = [];
           
-          // Get all user stakes with timestamps
-          const userStakes = new Map<string, { timestamp: number; blockNumber: string }>();
+          // Get all user stakes with timestamps for win rate calculation
+          const userStakeTimestamps = new Map<string, { timestamp: number; blockNumber: string }>();
           
           for (const log of logs) {
             if (!Array.isArray(log.topics)) continue;
@@ -197,7 +207,7 @@ export function useAnalytics(
                 const blockNumber = log.blockNumber || "0x0";
                 const timestamp = await getBlockTimestamp(blockNumber);
                 
-                userStakes.set(examId, { timestamp, blockNumber });
+                userStakeTimestamps.set(examId, { timestamp, blockNumber });
               }
             }
           }
@@ -210,8 +220,8 @@ export function useAnalytics(
             }
             
             // Only include if user participated
-            if (userStakes.has(examId)) {
-              const stakeInfo = userStakes.get(examId)!;
+            if (userStakeTimestamps.has(examId)) {
+              const stakeInfo = userStakeTimestamps.get(examId)!;
               const userWon = winners.includes(userAddress.toLowerCase());
               
               newExamPoints.push({
@@ -301,33 +311,104 @@ export function useAnalytics(
         let won = 0;
         let lost = 0;
         const examResults: ExamResult[] = [];
+        let totalReceivedFromWins = 0n;  // Total claimed from wins
+        let totalLostFromLosses = 0n;    // Total staked on losses
         
-        // Use the immutable history to calculate consistent metrics
+        // Use the immutable history to calculate consistent metrics with actual amounts
         for (const point of winRateHistory) {
           if (point.examResult === 'WON') {
             won++;
-            examResults.push({
-              exam: `Exam ${point.examId}`,
-              netReward: 2.0 // Estimate - actual rewards come from Claimed events
-            });
+            // Get the full exam ID from the short ID
+            const fullExamId = Array.from(finals.keys()).find(id => 
+              id.slice(0, 10) + '...' === point.examId
+            );
+            
+            if (fullExamId) {
+              const claimedAmount = userClaims.get(fullExamId) || 0n;
+              const stakedAmount = userStakes.get(fullExamId) || 0n;
+              
+              console.log(`🔍 WIN CALCULATION for ${point.examId}:`, {
+                fullExamId: fullExamId.slice(0, 10) + '...',
+                claimedAmount: ethers.formatUnits(claimedAmount, 6) + ' PYUSD',
+                stakedAmount: ethers.formatUnits(stakedAmount, 6) + ' PYUSD',
+                hasClaimed: claimedAmount > 0n
+              });
+              
+              if (claimedAmount > 0n) {
+                // User has claimed rewards - count the full claim amount
+                totalReceivedFromWins += claimedAmount;
+                const netReward = parseFloat(ethers.formatUnits(claimedAmount, 6));
+                console.log(`✅ Win with claim: +${netReward} PYUSD received`);
+                
+                examResults.push({
+                  exam: `Exam ${point.examId}`,
+                  netReward: netReward
+                });
+              } else {
+                // User won but hasn't claimed yet - assume they'll get their stake back
+                totalReceivedFromWins += stakedAmount; // At minimum, stake returned
+                const netReward = parseFloat(ethers.formatUnits(stakedAmount, 6));
+                console.log(`⏳ Win not claimed yet: +${netReward} PYUSD (estimated stake return)`);
+                
+                examResults.push({
+                  exam: `Exam ${point.examId}`,
+                  netReward: netReward
+                });
+              }
+            } else {
+              console.log(`⚠️ WIN: Could not find full exam ID for ${point.examId}`);
+              // Fallback to estimated values if exam not found
+              examResults.push({
+                exam: `Exam ${point.examId}`,
+                netReward: 1.0 // Conservative estimate
+              });
+            }
           } else if (point.examResult === 'LOST') {
             lost++;
-            examResults.push({
-              exam: `Exam ${point.examId}`, 
-              netReward: -1.0 // Lost stake
-            });
+            // Get the full exam ID from the short ID
+            const fullExamId = Array.from(finals.keys()).find(id => 
+              id.slice(0, 10) + '...' === point.examId
+            );
+            
+            if (fullExamId) {
+              const stakedAmount = userStakes.get(fullExamId) || 0n;
+              
+              console.log(`🔍 LOSS CALCULATION for ${point.examId}:`, {
+                fullExamId: fullExamId.slice(0, 10) + '...',
+                stakedAmount: ethers.formatUnits(stakedAmount, 6) + ' PYUSD',
+                lossAmount: '-' + ethers.formatUnits(stakedAmount, 6) + ' PYUSD'
+              });
+              
+              // For losses: count the full stake amount as lost
+              totalLostFromLosses += stakedAmount;
+              const netReward = -parseFloat(ethers.formatUnits(stakedAmount, 6));
+              
+              examResults.push({
+                exam: `Exam ${point.examId}`, 
+                netReward: netReward
+              });
+            } else {
+              console.log(`⚠️ LOSS: Could not find full exam ID for ${point.examId}`);
+              // Fallback to estimated values if exam not found
+              examResults.push({
+                exam: `Exam ${point.examId}`, 
+                netReward: -1.0 // Estimate: typically lose stake amount
+              });
+            }
           }
         }
         
-        // Calculate net earnings for display only (doesn't affect graph)
-        const netEarnings = (won * 2.0) - (lost * 1.0);
+        // Calculate net earnings: Total received - Total lost
+        const netEarnings = parseFloat(ethers.formatUnits(totalReceivedFromWins - totalLostFromLosses, 6));
         
-        console.log("📊 Analytics calculated from immutable history:", {
+        console.log("📊 Analytics calculated from immutable history with actual amounts:", {
           totalWon: won,
           totalLost: lost,
           totalExams: won + lost,
           netEarnings: netEarnings,
-          historyPoints: winRateHistory.length
+          historyPoints: winRateHistory.length,
+          totalReceived: ethers.formatUnits(totalReceivedFromWins, 6) + " PYUSD",
+          totalLostAmount: ethers.formatUnits(totalLostFromLosses, 6) + " PYUSD"
         });
         
         const totalProcessed = won + lost;

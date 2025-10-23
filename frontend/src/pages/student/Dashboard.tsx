@@ -419,7 +419,7 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
             <h2 className="text-2xl font-extrabold text-gray-800 mb-6 uppercase tracking-wide">
               My Classes
@@ -520,20 +520,6 @@ export default function StudentDashboard() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
-            <h2 className="text-2xl font-extrabold text-gray-800 mb-6 uppercase tracking-wide">
-              Recent Activity
-            </h2>
-            
-            <div className="text-center py-8">
-              <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 font-mono mb-2">No recent activity</p>
-              <p className="text-gray-400 text-sm">
-                Start staking on exams to see your activity here
-              </p>
-            </div>
           </div>
         </div>
       </div>
