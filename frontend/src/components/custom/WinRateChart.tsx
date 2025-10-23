@@ -35,27 +35,27 @@ interface TooltipProps {
   label?: string;
 }
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
       <div className="bg-white border-4 border-black p-4 shadow-[8px_8px_0px_#000]">
-        <p className="font-bold text-lg mb-2">{data.period}</p>
+        <p className="font-bold text-lg mb-2">Exam: {data.examId}</p>
         <div className="space-y-1">
           <p className={`font-bold text-lg ${data.examResult === 'WON' ? 'text-green-600' : 'text-red-600'}`}>
-            {data.examResult} 🎯
+            Result: {data.examResult} 🎯
           </p>
           <p className="text-blue-600 font-bold">
-            Running Win Rate: {data.winRate}%
+            Current Win Rate: {data.winRate}%
           </p>
-          <p className="text-gray-600">
-            Total Record: {data.stakesWon}W / {data.stakesTotal - data.stakesWon}L
+          <p className="text-gray-600 font-bold">
+            Total Wins: {data.stakesWon}
+          </p>
+          <p className="text-gray-600 font-bold">
+            Total Losses: {data.stakesTotal - data.stakesWon}
           </p>
           <p className="text-gray-500 text-sm">
-            Exam: {data.examId}
-          </p>
-          <p className="text-gray-400 text-xs">
-            {label}
+            Total Exams: {data.stakesTotal}
           </p>
         </div>
       </div>
@@ -114,7 +114,7 @@ const WinRateChart: React.FC<WinRateChartProps> = ({ data, className = "" }) => 
           <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
             <XAxis 
-              dataKey="period" 
+              dataKey="examId" 
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: '#666' }}

@@ -319,19 +319,32 @@ export function useAnalytics(
           }
         }
         
+        // Calculate net earnings for display only (doesn't affect graph)
+        const netEarnings = (won * 2.0) - (lost * 1.0);
+        
         console.log("📊 Analytics calculated from immutable history:", {
           totalWon: won,
           totalLost: lost,
           totalExams: won + lost,
+          netEarnings: netEarnings,
           historyPoints: winRateHistory.length
         });
         
         const totalProcessed = won + lost;
         const winRate = totalProcessed > 0 ? (won / totalProcessed) * 100 : 0;
+        
+        // Total Staked: Keep as blockchain data (cumulative amount staked - always increases)
         const formattedStaked = parseFloat(ethers.formatUnits(totalStaked, 6));
-        const formattedEarnings = parseFloat(
-          ethers.formatUnits(totalEarnings, 6)
-        );
+        
+        // Total Earnings: Use calculated net earnings (wins - losses, can be negative)
+        const blockchainEarnings = parseFloat(ethers.formatUnits(totalEarnings, 6));
+        
+        console.log("💰 Financial Summary:", {
+          totalStakedFromBlockchain: formattedStaked + " PYUSD (cumulative stakes)",
+          blockchainClaimedEarnings: blockchainEarnings + " PYUSD (actual claims)",
+          calculatedNetEarnings: netEarnings + " PYUSD (wins - losses)",
+          using: "blockchain for staked, calculated for earnings display"
+        });
 
         let classesJoined = 0;
         const token = localStorage.getItem("token");
@@ -364,9 +377,9 @@ export function useAnalytics(
           totalStakesLost: lost,
           winRate: Math.round(winRate),
           totalEarnings: `${
-            formattedEarnings >= 0 ? "+"  : ""
-          }${formattedEarnings.toFixed(2)} PYUSD`,
-          totalEarningsValue: formattedEarnings,
+            netEarnings >= 0 ? "+"  : ""
+          }${netEarnings.toFixed(2)} PYUSD`,
+          totalEarningsValue: netEarnings,
           classesJoined,
           examResults,
           winRateHistory: winRateHistory || [],
