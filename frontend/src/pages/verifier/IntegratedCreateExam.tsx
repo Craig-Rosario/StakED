@@ -97,8 +97,6 @@ const IntegratedCreateExam: React.FC = () => {
       return false;
     }
     
-    // Passing score validation removed - winners determined by prediction accuracy
-
     return true;
   };
 
@@ -122,7 +120,7 @@ const IntegratedCreateExam: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        alert(`✅ Exam created successfully!\n\nBlockchain Integration: ${data.exam.blockchainCreated ? 'Enabled' : 'Failed'}\nStaking starts immediately for students.`);
+        alert("✅ Exam created successfully!\n\nStaking starts immediately for students.");
         navigate('/verifier/dashboard');
       } else {
         throw new Error(data.message);
@@ -140,7 +138,6 @@ const IntegratedCreateExam: React.FC = () => {
   return (
     <div className="min-h-screen w-full p-4 sm:p-6 md:p-8 lg:p-12">
       <style>{`
-        /* Ensure datetime-local inputs show calendar picker properly */
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
           background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%23374151" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>');
           cursor: pointer;
@@ -157,7 +154,6 @@ const IntegratedCreateExam: React.FC = () => {
         }
       `}</style>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 max-w-7xl mx-auto">
-        {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
           <div className="mb-1">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-800">
@@ -171,7 +167,6 @@ const IntegratedCreateExam: React.FC = () => {
           <Card className="border-4 border-black shadow-[8px_8px_0px_#000]">
             <CardContent className="p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Class Selection */}
                 <div>
                   <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
                     Select Class
@@ -192,7 +187,6 @@ const IntegratedCreateExam: React.FC = () => {
                   {loading && <p className="text-xs text-gray-500 mt-1">Loading classes...</p>}
                 </div>
 
-                {/* Exam Title */}
                 <div>
                   <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
                     Exam Title
@@ -205,7 +199,6 @@ const IntegratedCreateExam: React.FC = () => {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
                   <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
                     Description
@@ -218,7 +211,6 @@ const IntegratedCreateExam: React.FC = () => {
                   />
                 </div>
 
-                {/* Dates */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
@@ -257,7 +249,6 @@ const IntegratedCreateExam: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Scoring */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label className="text-[#0A0A0A] mb-2 block uppercase text-xs font-bold tracking-wider">
@@ -271,11 +262,8 @@ const IntegratedCreateExam: React.FC = () => {
                       className="bg-white border-2 border-black text-[#0A0A0A] focus:border-[#00A2FF] px-4 py-3"
                     />
                   </div>
-                  
-                  {/* Passing score removed - winners determined by prediction accuracy */}
                 </div>
 
-                {/* Submit Button */}
                 <div className="flex justify-end space-x-4 pt-4">
                   <Button 
                     type="button"
@@ -297,9 +285,7 @@ const IntegratedCreateExam: React.FC = () => {
           </Card>
         </div>
 
-        {/* Sidebar Info */}
         <div className="space-y-6">
-          {/* Class Preview */}
           {selectedClass && (
             <Card className="border-4 border-black shadow-[8px_8px_0px_#000]">
               <CardHeader>
@@ -329,7 +315,6 @@ const IntegratedCreateExam: React.FC = () => {
             </Card>
           )}
 
-          {/* Blockchain Info */}
           <Card className="border-4 border-black shadow-[8px_8px_0px_#000]">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -360,7 +345,6 @@ const IntegratedCreateExam: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Contract Info */}
           <Card className="border-4 border-black shadow-[8px_8px_0px_#000]">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
