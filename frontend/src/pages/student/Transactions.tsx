@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ReceiptText, Loader2, ExternalLink } from "lucide-react";
-
+import BlockscoutLogo from "/images/BlockScoutLogo.png";
+import { Button } from "@/components/ui/button";
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 interface Transaction {
@@ -101,7 +102,7 @@ export default function TransactionPage() {
   const fetchRecentTransactions = async () => {
     try {
       setRecentLoading(true);
-      
+
       if (!userWalletAddress) {
         setRecentLoading(false);
         return;
@@ -140,7 +141,7 @@ export default function TransactionPage() {
       "0x2e1a7d4d": "claim",
       "0x095ea7b3": "approve"
     };
-    
+
     const methodId = input.slice(0, 10);
     return methodMap[methodId] || "0x98e8d931";
   };
@@ -191,20 +192,31 @@ export default function TransactionPage() {
     <div className="min-h-screen bg-[#F9F9F9] p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 flex items-center gap-3">
-          <img 
-            src="/src/assets/Blockscout.png" 
-            alt="BlockScout" 
-            className="w-6 h-6"
+          <img
+            src={BlockscoutLogo}
+            alt="Blockscout Logo"
+            className="w-10 h-10 object-contain"
           />
           <div>
-            <h1 className="text-4xl font-extrabold text-gray-800 tracking-wide">
+            <h1 className="text-4xl sm:text-4xl font-extrabold text-gray-800 mb-2">
               View <span className="text-green-500">Transactions</span>
             </h1>
-            <p className="font-mono text-gray-600 text-sm">
+            <p className="font-mono text-gray-600 text-md">
               Powered By BlockScout
             </p>
           </div>
         </div>
+
+        <div className="flex mt-8">
+          <Button
+            className="border-2 border-black shadow-[4px_4px_0px_#000] flex items-center gap-2 bg-purple-500 hover:bg-purple-600 cursor-pointer text-white mb-5"
+            onClick={() => window.open("https://staked.cloud.blockscout.com", "_blank")}
+          >
+            <ExternalLink className="w-4 h-4"/>
+            View Explorer on Autoscout
+          </Button>
+        </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
@@ -285,11 +297,10 @@ export default function TransactionPage() {
                             {txn.stakeAmount}
                           </td>
                           <td
-                            className={`px-4 py-3 font-bold ${
-                              txn.rewardAmount > 0
-                                ? "text-green-600"
-                                : "text-gray-500"
-                            }`}
+                            className={`px-4 py-3 font-bold ${txn.rewardAmount > 0
+                              ? "text-green-600"
+                              : "text-gray-500"
+                              }`}
                           >
                             {txn.rewardAmount}
                           </td>
@@ -316,13 +327,13 @@ export default function TransactionPage() {
             </div>
           </div>
 
-          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
+          <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000] max-h-[700px]">
             <div className="mb-6">
               <h2 className="text-2xl font-extrabold text-gray-800 uppercase tracking-wide">
                 RECENT TRANSACTIONS FOR {userWalletAddress ? formatAddress(userWalletAddress).toUpperCase() : 'YOUR WALLET'}
               </h2>
             </div>
-            
+
             {recentLoading ? (
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="animate-spin w-6 h-6 text-gray-600" />
@@ -361,15 +372,6 @@ export default function TransactionPage() {
                     </div>
                   </div>
                 ))}
-                
-                <div className="border-t border-gray-300 pt-4 mt-4">
-                  <button
-                    onClick={() => window.open('https://eth-sepolia.blockscout.com', '_blank')}
-                    className="w-full bg-black text-white font-bold py-3 px-4 border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 transition-transform text-sm"
-                  >
-                    VIEW ALL TRANSACTIONS IN THE BLOCK EXPLORER
-                  </button>
-                </div>
               </div>
             )}
           </div>

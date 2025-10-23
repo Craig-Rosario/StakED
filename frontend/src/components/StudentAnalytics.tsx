@@ -1,9 +1,17 @@
+import { useEffect, useState } from "react";
 import { useNotification, useTransactionPopup } from "@blockscout/app-sdk";
 import { Button } from "./ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalytics } from "../hooks/useAnalytics";
-import { Wallet, Award, BookOpen, TrendingUp } from "lucide-react";
+import {
+  Wallet,
+  Award,
+  BookOpen,
+  TrendingUp,
+  History,
+} from "lucide-react";
 import WinRateChart from "./custom/WinRateChart";
+import BlockscoutLogo from "/images/BlockScoutLogo.png";
 
 interface MetricCardProps {
   label: string;
@@ -20,6 +28,14 @@ interface StudentAnalyticsProps {
   refreshTrigger?: number;
 }
 
+interface RecentTx {
+  hash: string;
+}
+
+const BLOCKSCOUT_BASE =
+  import.meta.env.VITE_BLOCKSCOUT_BASE_URL ||
+  "https://eth-sepolia.blockscout.com/api/v2";
+
 const MetricCard = ({
   label,
   value,
@@ -31,7 +47,6 @@ const MetricCard = ({
   <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_#000]">
     <div className="flex items-center justify-between mb-4">
       <div className={`p-3 bg-${color}-100 border-2 border-black`}>{icon}</div>
-
       {loading ? (
         <Skeleton className="h-6 w-16 rounded-md" />
       ) : (
@@ -40,7 +55,6 @@ const MetricCard = ({
         </span>
       )}
     </div>
-
     <h3 className="font-bold text-gray-700 uppercase text-sm tracking-wide">
       {label}
     </h3>
@@ -55,23 +69,37 @@ export function StudentAnalytics({
   chainId = "11155111",
   refreshTrigger,
 }: StudentAnalyticsProps) {
-  const { metrics, isLoading, error } = useAnalytics(
+  const { metrics, isLoading } = useAnalytics(
     userAddress,
     chainId,
     refreshTrigger
   );
   const { openPopup } = useTransactionPopup();
   const { openTxToast } = useNotification();
+  const [latestTx, setLatestTx] = useState<RecentTx | null>(null);
+  const [fetchingTx, setFetchingTx] = useState(false);
 
-  if (error) {
-    return (
-      <div className="p-4 border-2 border-red-200 bg-red-50 rounded-lg">
-        <div className="text-red-500 font-medium">
-          Error loading analytics: {error}
-        </div>
-      </div>
-    );
-  }
+  const fetchLatestTransaction = async () => {
+    if (!userAddress) return;
+    try {
+      setFetchingTx(true);
+      const response = await fetch(
+        `${BLOCKSCOUT_BASE}/addresses/${userAddress}/transactions?limit=1`
+      );
+      if (!response.ok) throw new Error("Failed to fetch transaction data");
+      const data = await response.json();
+      const hash = data?.items?.[0]?.hash;
+      if (hash) setLatestTx({ hash });
+    } catch (err) {
+      console.error("Error fetching latest transaction:", err);
+    } finally {
+      setFetchingTx(false);
+    }
+  };
+
+  useEffect(() => {
+    if (userAddress) fetchLatestTransaction();
+  }, [userAddress]);
 
   const totalEarningsValue = metrics?.totalEarningsValue ?? 0;
 
@@ -128,20 +156,36 @@ export function StudentAnalytics({
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <img
+          src={BlockscoutLogo}
+          alt="Blockscout Logo"
+          className="w-8 h-8 object-contain"
+        />
+        <p className="text-md text-gray-600 font-mono">
+          Analytics Powered by <span className="font-semibold">Blockscout</span>
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {stats.map((stat, i) => (
           <MetricCard key={i} {...stat} loading={isLoading} />
         ))}
       </div>
 
-      {/* Win Rate Chart */}
+      <div className="flex mt-8">
+        <Button
+          className="border-2 border-black shadow-[4px_4px_0px_#000] flex items-center gap-2 bg-purple-500 hover:bg-purple-600 cursor-pointer text-white"
+          onClick={() => openPopup({ chainId, address: userAddress })}
+        >
+          <History className="w-4 h-4" />
+          View Transaction History
+        </Button>
+      </div>
+
       {!isLoading && metrics?.winRateHistory && (
-        <WinRateChart 
-          data={metrics.winRateHistory} 
-          className="col-span-full"
-        />
+        <WinRateChart data={metrics.winRateHistory} className="col-span-full" />
       )}
-      
     </div>
   );
 }
