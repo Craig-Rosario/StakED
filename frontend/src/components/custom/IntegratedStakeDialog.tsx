@@ -173,8 +173,8 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       return;
     }
 
-    if (!predictedMarks || parseFloat(predictedMarks) < 0 || parseFloat(predictedMarks) > 100) {
-      console.error("Invalid predicted marks");
+    if (!predictedMarks || parseFloat(predictedMarks) < 40 || parseFloat(predictedMarks) > 100) {
+      console.error("Invalid predicted marks - minimum 40%");
       return;
     }
 
@@ -360,18 +360,23 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
                 <Input
                   id="predictedMarks"
                   type="number"
-                  placeholder="Enter predicted marks (0-100)"
+                  placeholder="Enter predicted marks (minimum 40%)"
                   value={predictedMarks}
                   onChange={(e) => setPredictedMarks(e.target.value)}
-                  className="pl-8"
-                  min="0"
+                  className={`pl-8 ${predictedMarks && parseFloat(predictedMarks) < 40 ? 'border-red-500 focus:border-red-500' : ''}`}
+                  min="40"
                   max="100"
                   step="0.1"
                 />
               </div>
               <p className="text-xs text-gray-500">
-                Predict your exam score (0-100%). More accurate predictions may earn bonus rewards!
+                Minimum predicted marks: 40%. More accurate predictions may earn bonus rewards!
               </p>
+              {predictedMarks && parseFloat(predictedMarks) < 40 && (
+                <p className="text-xs text-red-500">
+                  Predicted marks must be at least 40%
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-2">
@@ -380,7 +385,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
               </Button>
               <Button 
                 onClick={handleStake} 
-                disabled={loading || !amount || parseFloat(amount) <= 0 || !predictedMarks || parseFloat(predictedMarks) < 0 || parseFloat(predictedMarks) > 100}
+                disabled={loading || !amount || parseFloat(amount) <= 0 || !predictedMarks || parseFloat(predictedMarks) < 40 || parseFloat(predictedMarks) > 100}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
                 {loading ? "Processing..." : "Stake PYUSD"}
