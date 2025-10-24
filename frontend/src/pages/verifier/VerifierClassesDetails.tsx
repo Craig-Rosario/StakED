@@ -189,13 +189,13 @@ const VerifierClassesDetails = () => {
         <TabsList className="relative flex w-full sm:w-1/2 mx-auto border-2 border-black rounded-xl overflow-hidden bg-gray-100 shadow-[4px_4px_0px_#000]">
           <TabsTrigger
             value="students"
-            className="flex-1 py-3 text-center font-extrabold uppercase text-sm sm:text-base tracking-wide transition-all hover:bg-gray-200 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-[inset_0_0_0_2px_#000]"
+            className="flex-1 py-3 text-center font-extrabold uppercase text-sm sm:text-base tracking-wide transition-all hover:bg-gray-200 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-[inset_0_0_0_2px_#000] cursor-pointer"
           >
             Students
           </TabsTrigger>
           <TabsTrigger
             value="exams"
-            className="flex-1 py-3 text-center font-extrabold uppercase text-sm sm:text-base tracking-wide transition-all hover:bg-gray-200 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-[inset_0_0_0_2px_#000]"
+            className="flex-1 py-3 text-center font-extrabold uppercase text-sm sm:text-base tracking-wide transition-all hover:bg-gray-200 data-[state=active]:bg-gray-900 data-[state=active]:text-white data-[state=active]:shadow-[inset_0_0_0_2px_#000] cursor-pointer"
           >
             Exams
           </TabsTrigger>
