@@ -6,6 +6,47 @@
 
 ---
 
+## 🏅 Partner Tracks & Prizes
+
+StakED leverages cutting-edge technologies from our amazing partners to deliver a seamless Web3 experience:
+
+| Partner | Integration | Track/Prize |
+| :--- | :--- | :--- |
+| **🔍 Blockscout** | **Analytics SDK** - Real-time blockchain analytics, transaction tracking, and user insights for comprehensive platform monitoring | **Blockscout Track** |
+| **🤖 Autoscout** | **Payment & Transaction Synchronization** - Automated payment processing, smart contract interaction optimization, and seamless transaction management | **Autoscout Track** |
+| **⚒️ Hardhat** | **Smart Contract Deployment** - Professional-grade development environment for testing, deploying, and managing Solidity contracts | **Hardhat Track** |
+| **💰 PayPal PYUSD** | **Staking Token** - PayPal USD as the primary payment token for all staking, rewards, and transactions, providing stability and regulatory compliance | **PayPal PYUSD Track** |
+
+*These integrations showcase how modern Web3 development can leverage enterprise-grade tools and stablecoins to create production-ready decentralized applications.*
+
+### 🤝 Detailed Partner Implementations
+
+#### 🔍 Blockscout Analytics SDK Integration
+- **Real-time transaction monitoring** for all staking and claim activities across the platform
+- **Comprehensive user analytics dashboard** showing individual staking history, success rates, and total earnings
+- **Contract interaction tracking** providing detailed insights into platform usage patterns
+- **Implementation**: Integrated throughout frontend analytics components and backend monitoring systems for complete visibility
+
+#### 🤖 Autoscout Payment & Transaction Synchronization
+- **Automated payment processing pipeline** ensuring seamless PYUSD transfers between users
+- **Smart contract interaction optimization** reducing gas costs and eliminating failed transaction scenarios
+- **Advanced transaction synchronization** maintaining consistency between on-chain events and off-chain database records
+- **Implementation**: Core backend API middleware managing all payment flows and transaction lifecycle management
+
+#### ⚒️ Hardhat Professional Development Environment
+- **Enterprise-grade smart contract development** with comprehensive testing suites and deployment automation
+- **Sepolia testnet deployment infrastructure** featuring automated contract verification and configuration management
+- **Contract upgradeability frameworks** enabling seamless updates and migration scripts for production deployments
+- **Implementation**: Complete development workflow from local testing to production deployment with full CI/CD integration
+
+#### 💰 PayPal PYUSD Stablecoin Integration
+- **Regulatory-compliant USD stablecoin** providing price stability for all academic staking activities
+- **Enterprise-grade financial infrastructure** backed by PayPal's industry-leading payment processing capabilities
+- **Seamless fiat on/off ramp integration** enabling easy user onboarding without complex crypto acquisition
+- **Implementation**: Primary transaction token for all platform operations including staking, rewards distribution, and fee collection
+
+---
+
 ## 🚀 Key Features
 
 | Feature | Description | On-Chain/Off-Chain |
@@ -20,12 +61,14 @@
 
 ## 🛠️ Technology Stack
 
-| Component | Technology | Description |
-| :--- | :--- | :--- |
-| **Frontend** | **React**, **TypeScript**, **Vite**, ShadCN UI | Student and Verifier Dashboards. |
-| **Backend (API)** | **Node.js**, **Express**, **MongoDB** | Off-chain data (user profiles, class/exam metadata), and API for the frontend. |
-| **Smart Contracts** | **Solidity** (`0.8.17+`), **Hardhat v3** | Core logic for staking, prediction-based winner determination, and payout distribution. |
-| **Web3 Integration** | **Ethers.js** | Handles wallet connections, transaction signing, and contract calls. |
+| Component | Technology | Description | Partner Integration |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | **React**, **TypeScript**, **Vite**, ShadCN UI | Student and Verifier Dashboards | - |
+| **Backend (API)** | **Node.js**, **Express**, **MongoDB** | Off-chain data (user profiles, class/exam metadata), and API for the frontend | **🤖 Autoscout** - Transaction sync |
+| **Smart Contracts** | **Solidity** (`0.8.28`), **Hardhat v3** | Core logic for staking, prediction-based winner determination, and payout distribution | **⚒️ Hardhat** - Deployment & testing |
+| **Web3 Integration** | **Ethers.js** | Handles wallet connections, transaction signing, and contract calls | - |
+| **Analytics** | **Blockscout SDK** | Real-time blockchain analytics and transaction monitoring | **🔍 Blockscout** - Analytics integration |
+| **Payment Token** | **PayPal USD (PYUSD)** | Stable, regulated USD token for all staking and rewards | **💰 PayPal PYUSD** - Primary token |
 
 ---
 
