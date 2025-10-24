@@ -63,7 +63,7 @@ const HeroPage = () => {
 
         <div className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-8 sm:mb-10 text-muted-foreground max-w-2xl sm:max-w-3xl mx-auto px-2 sm:px-4 leading-relaxed">
           <TextAnimate animation="blurInUp" by="word" once>
-            Stake your academic performance like stocks. Bet on yourself and earn rewards on-chain.
+            A gamified platform where you can stake your academic performance like stocks. Bet on yourself and earn rewards on-chain.
           </TextAnimate>
         </div>
 
