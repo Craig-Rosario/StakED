@@ -11,8 +11,8 @@ import {
     SidebarMenuItem,
     SidebarMenuButton,
 } from "@/components/ui/sidebar";
-
 import { ChartLine, CalendarDays, LogOut } from "lucide-react";
+import StakedLogo from "/StakedLogo.png";
 
 const AppSidebarVerifier = () => {
     const [activeTab, setActiveTab] = useState<
@@ -30,21 +30,26 @@ const AppSidebarVerifier = () => {
             collapsible="icon"
             className="bg-white dark:bg-zinc-900 text-black dark:text-white border-r-4 border-black"
         >
-            <SidebarHeader className="group-data-[state=collapsed]:p-[14px] p-[4px] flex justify-center">
+            <SidebarHeader className="p-[2px] flex justify-center group-data-[state=collapsed]:p-[12px]">
                 <h1 className="text-2xl tracking-tighter">
-
                     <span className="hidden font-extrabold group-data-[state=expanded]:block">
-                        Stak<span className="text-[#FF4C4C]">E</span><span className="text-[#01a72a]">D</span>
+                        Stak<span className="text-[#FF4C4C]">E</span>
+                        <span className="text-[#01a72a]">D</span>
                     </span>
                     <span className="hidden font-mono group-data-[state=expanded]:block text-sm text-gray-500">
                         Verifier Dashboard
                     </span>
                     <span
-                        className=" group-data-[state=collapsed]:flex
-    group-data-[state=collapsed]:justify-center
-    group-data-[state=collapsed]:items-center font-extrabold  item group-data-[state=expanded]:hidden "
+                        className="group-data-[state=collapsed]:flex
+                        group-data-[state=collapsed]:justify-center
+                        group-data-[state=collapsed]:items-center font-extrabold  
+                        group-data-[state=expanded]:hidden"
                     >
-                        SK
+                        <img
+                            src={StakedLogo}
+                            alt="Staked Logo"
+                            className="w-8 h-8 object-contain"
+                        />
                     </span>
                 </h1>
             </SidebarHeader>
@@ -56,7 +61,7 @@ const AppSidebarVerifier = () => {
                             onClick={() => handleNavigate("dashboard", "/verifier/dashboard")}
                             isActive={activeTab === "dashboard"}
                             className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
-                transition-transform hover:scale-100
+                transition-transform hover:scale-100 cursor-pointer
                 ${activeTab === "dashboard"
                                     ? "bg-blue-500 text-white"
                                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
@@ -76,7 +81,7 @@ const AppSidebarVerifier = () => {
                             }
                             isActive={activeTab === "upcomingTest"}
                             className={`px-4 py-3 flex text-lg border-4 border-black font-bold 
-                transition-transform hover:scale-100
+                transition-transform hover:scale-100 cursor-pointer 
                 ${activeTab === "upcomingTest"
                                     ? "bg-blue-500 text-white"
                                     : "bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700"
@@ -88,16 +93,13 @@ const AppSidebarVerifier = () => {
                             <span>Classes</span>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-
-
                 </SidebarMenu>
             </SidebarContent>
-
 
             <SidebarFooter className="px-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100" onClick={() => {
+                        <SidebarMenuButton className="px-4 py-3 flex gap-3 group-data-[state=collapsed]:gap-0  group-data-[state=collapsed]:justify-center text-lg border-4 border-black font-bold uppercase bg-white hover:bg-red-500 hover:text-white transition-transform hover:scale-100 cursor-pointer" onClick={() => {
                             localStorage.removeItem("token");
                             navigate("/");
                             window.location.reload();
@@ -113,4 +115,4 @@ const AppSidebarVerifier = () => {
     );
 }
 
-export default AppSidebarVerifier
+export default AppSidebarVerifier;
