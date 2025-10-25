@@ -159,3 +159,11 @@ The project is structured into three main directories: `contracts`, `backend`, a
     ```bash
     npm run dev
     ```
+
+---
+
+
+## 🤖 Use of AI
+
+AI tools played a small but helpful role in building **StakED**, from improving the overall look and feel of the UI to refining the smart contracts and assisting in their connection.
+
