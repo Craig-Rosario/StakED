@@ -14,8 +14,8 @@ interface WinRateDataPoint {
   period: string;
   stakesWon: number;
   stakesTotal: number;
-  examResult?: string; // 'WON' or 'LOST'
-  examId?: string; // Short exam ID
+  examResult?: string; 
+  examId?: string; 
 }
 
 interface ClassmateAnalytics {
@@ -107,7 +107,7 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
             let won = 0;
             let lost = 0;
             const finals = new Map<string, string[]>();
-            const userStakedExams = new Set<string>(); // Track exams where user staked
+            const userStakedExams = new Set<string>(); 
 
             for (const log of logs) {
               if (!Array.isArray(log.topics)) continue;
@@ -131,7 +131,7 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
                 
                 if (staker.toLowerCase() === lowerAddress) {
                   totalStaked += amount;
-                  userStakedExams.add(examId); // Track this exam
+                  userStakedExams.add(examId);
                 }
               }
 
@@ -151,7 +151,6 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
               }
             }
 
-            // Only count wins/losses for exams where the user actually staked
             for (const [examId, winners] of finals.entries()) {
               if (userStakedExams.has(examId)) {
                 if (winners.includes(lowerAddress)) {
@@ -162,12 +161,10 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
               }
             }
 
-            // Generate win rate history for charts
             const winRateHistory: WinRateDataPoint[] = [];
             let runningWon = 0;
             let runningTotal = 0;
 
-            // Create a sorted list of finalized exams where user staked
             const userFinalizedExams = Array.from(finals.entries())
               .filter(([examId]) => userStakedExams.has(examId))
               .map(([examId, winners]) => ({
@@ -176,7 +173,6 @@ export function useClassmateAnalytics(walletAddresses: string[]) {
                 shortId: examId.slice(0, 10) + '...'
               }));
 
-            // Calculate running win rate for each exam
             userFinalizedExams.forEach((exam, index) => {
               runningTotal++;
               if (exam.won) runningWon++;

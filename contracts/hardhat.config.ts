@@ -15,7 +15,7 @@ const config: HardhatUserConfig = {
   },
 networks: {
   hardhat: {
-    type: "edr-simulated", // 👈 required for Hardhat 3 internal node
+    type: "edr-simulated", 
     chainType: "l1",
   },
   localhost: {

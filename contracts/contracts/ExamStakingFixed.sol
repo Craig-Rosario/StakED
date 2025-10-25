@@ -30,11 +30,11 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
         mapping(address => bool) hasClaimed;                     
         uint16 feeBps;
         uint256 protocolFee;
-        mapping(address => uint256) actualScores;               // Actual scores after grading
-        mapping(address => uint256) predictedScores;            // Predicted scores before exam
+        mapping(address => uint256) actualScores;             
+        mapping(address => uint256) predictedScores;          
     }
 
-    mapping(bytes32 => Exam) private exams; // examId → Exam
+    mapping(bytes32 => Exam) private exams; 
 
     event ExamCreated(bytes32 indexed examId, address verifier, uint64 stakeDeadline, uint16 feeBps);
     event ExamCanceled(bytes32 indexed examId);
@@ -139,7 +139,6 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
         require(amount > 0, "Zero amount");
         require(predictedScore <= 100, "Invalid predicted score");
 
-        // Store predicted score for the candidate (only if staking on themselves)
         if (msg.sender == candidate) {
             e.predictedScores[candidate] = predictedScore;
         }
@@ -186,12 +185,10 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
 
         address[] memory winners = _getWinners(e);
         
-        // If no winners, all stakes already sent to staked bank in distributeRewards
         if (winners.length == 0) {
             revert("No winners - stakes sent to staked bank");
         }
         
-        // Check if user is a winner (for self-staking claims)
         bool isUserWinner = false;
         for (uint256 i = 0; i < winners.length; i++) {
             if (winners[i] == msg.sender) {
@@ -200,34 +197,25 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
             }
         }
         
-        // Calculate user's stake on winning candidates (for multistaking)
         uint256 userWinnerStake = _getUserWinnerStake(e, msg.sender);
         
-        // User can claim if they are a winner OR if they have stakes on winning candidates
         require(isUserWinner || userWinnerStake > 0, "No winning stake or not a winner");
         
-        // Calculate user's proportional reward
         (uint256 totalWinnerStake, uint256 totalLoserStake) = _calculateStakeTotals(e);
         
         uint256 finalAmount;
         
         if (isUserWinner) {
-            // User won - they get their full stake back plus proportional rewards
             if (totalLoserStake == 0) {
-                // Everyone won - just return original stake
                 finalAmount = userStake;
             } else {
-                // Proportional distribution: finalAmount = userStake + reward_share
                 uint256 rewardShare = (userWinnerStake * totalLoserStake) / totalWinnerStake;
                 finalAmount = userWinnerStake + rewardShare;
             }
         } else if (userWinnerStake > 0) {
-            // User didn't win but has stakes on winners (multistaking)
             if (totalLoserStake == 0) {
-                // Everyone won - return just the winning stakes
                 finalAmount = userWinnerStake;
             } else {
-                // Proportional distribution for multistaking
                 uint256 rewardShare = (userWinnerStake * totalLoserStake) / totalWinnerStake;
                 finalAmount = userWinnerStake + rewardShare;
             }
@@ -253,12 +241,10 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
         require(!e.finalized, "Already finalized");
         require(students.length == scores.length, "Array length mismatch");
         
-        // Set actual scores and determine winners based on prediction accuracy
         for (uint256 i = 0; i < students.length; i++) {
             e.actualScores[students[i]] = scores[i];
             uint256 predictedScore = e.predictedScores[students[i]];
             
-            // Win condition: actual score >= predicted score
             if (scores[i] >= predictedScore) {
                 e.isWinner[students[i]] = true;
             }
@@ -274,7 +260,6 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
         address[] memory winners = _getWinners(e);
         address stakedBank = 0x6D41680267986408E5e7c175Ee0622cA931859A4;
         
-        // If nobody wins, send entire pool to staked bank
         if (winners.length == 0) {
             uint256 totalAmount = e.totalStake;
             if (totalAmount > 0) {
@@ -285,20 +270,15 @@ contract ExamStakingFixed is Ownable, ReentrancyGuard, Pausable {
             return;
         }
         
-        // Calculate protocol fee on total stake
         uint256 protocolFee = (e.totalStake * e.feeBps) / 10_000;
         e.protocolFee += protocolFee;
         
-        // If everyone wins, no redistribution - winners can claim their original stakes
         if (winners.length == e.candidates.length) {
             e.finalized = true;
             emit ExamFinalized(examId, winners);
             return;
         }
         
-        // Mixed results: Winners get proportional share of losers' stakes
-        // The actual redistribution math is handled in the claim() function
-        // Here we just finalize the exam to enable claiming
         e.finalized = true;
         emit ExamFinalized(examId, winners);
     }
