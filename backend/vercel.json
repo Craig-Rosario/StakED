@@ -1,14 +1,15 @@
 {
   "version": 2,
   "builds": [
-    { "src": "server.js", "use": "@vercel/node" }
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": { "maxDuration": 30 }
+    }
   ],
-  "routes": [
-    { "src": "/(.*)", "dest": "server.js" }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/server.js" }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
@@ -18,5 +19,8 @@
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
-  ]
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
