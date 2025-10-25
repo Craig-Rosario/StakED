@@ -1,49 +1,72 @@
 # StakED - The On-Chain Confidence Market 🏆
 
-### A Web3 Platform for Academic Performance Staking
+### Stake on Performance. Earn on Results.
 
-**StakED** is a decentralized application (dApp) built to **gamify academic motivation** and ensure integrity in grading. Students stake tokens on their predicted academic performance, while verifiers (teachers/examiners) commit and reveal grades on-chain using a verifiable process. Winners earn a proportional share of the forfeited stakes from those who failed to meet their goals.
+**StakED** is a decentralized, gamified platform that lets students stake on academic performance using **PayPal’s PYUSD stablecoin** and earn rewards based on real, verified results. It brings the transparency of **Blockscout**, the stability of **PYUSD**, and the reliability of **Hardhat 3** into one on-chain ecosystem that rewards learning through incentives.
 
 ---
 
-## 🏅 Partner Tracks & Prizes
+## 🚀 Live Links
 
-StakED leverages cutting-edge technologies from our amazing partners to deliver a seamless Web3 experience:
+- **Deployed:** [[staked.vercel.app](https://stak-ed.vercel.app/)]
+- **Autoscout Explorer:** [staked.cloud.blockscout.com](https://staked.cloud.blockscout.com/)
 
-| Partner | Integration | Track/Prize |
-| :--- | :--- | :--- |
-| **🔍 Blockscout** | **Analytics SDK** - Real-time blockchain analytics, transaction tracking, and user insights for comprehensive platform monitoring | **Blockscout Track** |
-| **🤖 Autoscout** | **Payment & Transaction Synchronization** - Automated payment processing, smart contract interaction optimization, and seamless transaction management | **Autoscout Track** |
-| **⚒️ Hardhat** | **Smart Contract Deployment** - Professional-grade development environment for testing, deploying, and managing Solidity contracts | **Hardhat Track** |
-| **💰 PayPal PYUSD** | **Staking Token** - PayPal USD as the primary payment token for all staking, rewards, and transactions, providing stability and regulatory compliance | **PayPal PYUSD Track** |
+---
 
-*These integrations showcase how modern Web3 development can leverage enterprise-grade tools and stablecoins to create production-ready decentralized applications.*
+### 🧪 For Judging Access
 
-### 🤝 Detailed Partner Implementations
+For the judging process, we’ve provided **verifier access** inside the app.
+You will need **two MetaMask accounts**:
+- One to log in as a **student**
+- One to log in as a **verifier**
 
-#### 🔍 Blockscout Analytics SDK Integration
-- **Real-time transaction monitoring** for all staking and claim activities across the platform
-- **Comprehensive user analytics dashboard** showing individual staking history, success rates, and total earnings
-- **Contract interaction tracking** providing detailed insights into platform usage patterns
-- **Implementation**: Integrated throughout frontend analytics components and backend monitoring systems for complete visibility
+A quick-access button for the **Verifier Dashboard** is available on the landing page for easy testing.
 
-#### 🤖 Autoscout Payment & Transaction Synchronization
-- **Automated payment processing pipeline** ensuring seamless PYUSD transfers between users
-- **Smart contract interaction optimization** reducing gas costs and eliminating failed transaction scenarios
-- **Advanced transaction synchronization** maintaining consistency between on-chain events and off-chain database records
-- **Implementation**: Core backend API middleware managing all payment flows and transaction lifecycle management
+---
 
-#### ⚒️ Hardhat Professional Development Environment
-- **Enterprise-grade smart contract development** with comprehensive testing suites and deployment automation
-- **Sepolia testnet deployment infrastructure** featuring automated contract verification and configuration management
-- **Contract upgradeability frameworks** enabling seamless updates and migration scripts for production deployments
-- **Implementation**: Complete development workflow from local testing to production deployment with full CI/CD integration
+## 🧩 Partner Integrations
 
-#### 💰 PayPal PYUSD Stablecoin Integration
-- **Regulatory-compliant USD stablecoin** providing price stability for all academic staking activities
-- **Enterprise-grade financial infrastructure** backed by PayPal's industry-leading payment processing capabilities
-- **Seamless fiat on/off ramp integration** enabling easy user onboarding without complex crypto acquisition
-- **Implementation**: Primary transaction token for all platform operations including staking, rewards distribution, and fee collection
+Below are the hackathon partner tracks StakED integrates with — **PayPal (PYUSD)**, **Blockscout**, and **Hardhat 3**
+
+### 💠 **PayPal USD (PYUSD)**
+
+| Criteria | Description | How StakED Satisfies |
+|-----------|--------------|----------------------|
+| **About** | PayPal USD (PYUSD) is a stablecoin enabling secure digital paymentss. | StakED uses PYUSD as the **core staking and reward currency**, ensuring stable and transparent academic rewards. |
+| **Functionality** | How well does the project work technically? | Fully functional staking, claiming, and reward logic using `SafeERC20` transfers of PYUSD on Sepolia Testnet. |
+| **Payments Applicability** | How does it address real-world payment challenges? | PYUSD eliminates volatility, allowing students worldwide to earn real-value incentives for performance, bridging **DeFi** and **education**. |
+| **Novelty** | How unique is the concept? | StakED introduces an on-chain education staking platform that uses a stablecoin (PYUSD) to enable transparent, performance-based academic rewards. |
+| **UX** | Is the experience intuitive? | Clean ShadCN + Tailwind with a neo-brutalism styled interface with transparent staking flow and Blockscout-linked transaction views. |
+| **Open-Source** | Public and composable code? | 100% open-source on GitHub. |
+| **Business Plan** | Can this evolve into a viable business? | StakED can scale into a **learning incentive platform** for schools or edtechs using PYUSD-based micro-rewards to incentivze studying. |
+
+> 🧠 **In essence:** “PYUSD brings PayPal’s trust and stability into DeFi staking, finally making real-world, dollar-backed incentives possible for education.”
+
+---
+
+### 🟣 **Blockscout**
+
+| Criteria | Description | How StakED Satisfies |
+|-----------|--------------|----------------------|
+| **Autoscout Use** | Did we deploy a custom explorer? | Yes — [staked.cloud.blockscout.com](https://staked.cloud.blockscout.com) on Sepolia, tracking all contract transactions. |
+| **SDK Integration** | Did the app use Blockscout’s SDK meaningfully? | Yes — real-time transaction history, win-rate tracking, toast notifications, and on-chain analytics powered by the SDK & API (v2). |
+| **Transparency** | Are transactions verifiable? | All staking, claim, and exam interactions link directly to Blockscout explorer pages. |
+| **Originality** | How unique is the use case? | Combining education, staking, and on-chain analytics. |
+
+> 🔍 **“Blockscout makes StakED fully transparent — users can verify every stake, payout, and result.”**
+
+---
+
+### 🛠️ **Hardhat 3**
+
+| Criteria | Description | How StakED Satisfies |
+|-----------|--------------|----------------------|
+| **Version Compliance** | Uses Hardhat 3.0.0+? | Yes — explicitly built with v3 and its new compiler/runtime. |
+| **Testing** | Are tests implemented with Hardhat 3? | Yes — smart contract deployment and staking flow tested using Solidity test framework. |
+| **Performance** | Uses Hardhat’s new features? | Verified faster compile & local simulation with Hardhat Network. |
+| **Reliability** | Is Hardhat integral to the build process? | Entire contract lifecycle — from compilation to testnet deployment — runs through Hardhat scripts. |
+
+> 🧱 **“Every contract in StakED was built and validated with Hardhat 3 — ensuring stable, production-grade deployment.”**
 
 ---
 
@@ -54,8 +77,8 @@ StakED leverages cutting-edge technologies from our amazing partners to deliver 
 | **Self-Staking** | Students lock tokens to bet on their own success (e.g., scoring $\ge 75\%$ on an exam). | Hybrid (Token Transfer $\rightarrow$ On-Chain Stake) |
 | **Peer Staking** | Students can stake on the expected performance of their classmates, creating a dynamic, peer-driven confidence market. | Hybrid (Token Transfer $\rightarrow$ On-Chain Stake) |
 | **Verifier Integrity** | Verifiers can create exams, set deadlines, and manage classes. The platform uses a **commit-reveal** process for grading to prevent results tampering. | On-Chain (Verifier Registry, Exam Management) |
-| **Prediction-Based Payout** | Winners are determined by accuracy: **actual score $\ge$ predicted score**. Forfeited stakes from losers are distributed among winning stakers. | On-Chain (Calculated in `ExamStaking.claim()`) |
-| **PYUSD as Staking Token** | **PayPal USD (PYUSD)** is used as the base staking and reward token, providing a stable, regulated asset for financial incentives. | On-Chain (via `IERC20` interface) |
+| **Prediction-Based Payout** | Winners are determined by accuracy: **actual score $\ge$ predicted score**. Forfeited stakes from losers are distributed among winning stakers. | On-Chain |
+| **PYUSD as Staking Token** | **PayPal USD (PYUSD)** is used as the base staking and reward token, providing a stable, regulated asset for financial incentives. | On-Chain |
 
 ---
 
