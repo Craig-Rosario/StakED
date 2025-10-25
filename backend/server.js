@@ -13,14 +13,22 @@ dotenv.config();
 
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB **inside a lazy function**, not top-level
+let isConnected = false;
+async function ensureDBConnection() {
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
+  }
+}
 
 // Middleware
-app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000", "https://your-frontend.vercel.app"],
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -32,12 +40,13 @@ app.use("/api/users", userRoutes);
 app.use("/api/stakes", stakeRoutes);
 app.use("/api/exams", examRoutes);
 
-// Health check route
-app.get("/", (req, res) => {
-  res.json({ message: "StakED Backend API is running!" });
+// Health check
+app.get("/", async (req, res) => {
+  await ensureDBConnection();
+  res.json({ message: "✅ StakED Backend API is running on Vercel!" });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ success: false, message: "Something went wrong!" });
@@ -48,7 +57,8 @@ app.use("*", (req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+// ❌ Remove this line — Vercel doesn’t support custom ports
+// app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+// ✅ Instead, export the app for Vercel
+export default app;
