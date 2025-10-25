@@ -17,12 +17,12 @@ interface GradingDialogProps {
   onGraded?: () => void;
 }
 
-const GradingDialog: React.FC<GradingDialogProps> = ({ 
-  examId, 
-  examName, 
-  students, 
-  onClose, 
-  onGraded 
+const GradingDialog: React.FC<GradingDialogProps> = ({
+  examId,
+  examName,
+  students,
+  onClose,
+  onGraded
 }) => {
   const [marks, setMarks] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
@@ -41,7 +41,7 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
       ...prev,
       [studentId]: isNaN(numValue) ? 0 : numValue
     }));
-    
+
     // Mark student as graded when they receive a mark > 0
     if (numValue > 0) {
       setGradedStudents(prev => new Set(prev).add(studentId));
@@ -58,28 +58,27 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
     try {
       setIsLoading(true);
       setSubmitMessage('Processing grades...');
-      
+
       setSubmitMessage('Submitting grades and distributing PYUSD rewards...');
-      
-      // Submit grades to backend (which handles both database and blockchain automatically)
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4000/api/exams/submit-grades`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE}/exams/submit-grades`, { 
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           examId,
-          grades: students.map(s => ({
+          grades: students.map((s) => ({
             studentAddress: s.walletAddress,
-            score: marks[s._id] || 0
-          }))
-        })
+            score: marks[s._id] || 0,
+          })),
+        }),
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         setSubmitMessage(`❌ Error: ${result.message}`);
         return;
@@ -87,12 +86,12 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
 
       // Backend handles both database and blockchain automatically
       setSubmitMessage(`🎉 Success! ${result.scenario || 'Grades submitted'} - Winners: ${result.winners || 0}/${result.totalStudents || students.length}. PYUSD rewards distributed!`);
-      
+
       setTimeout(() => {
         onGraded?.();
         onClose?.();
       }, 3000);
-      
+
     } catch (error) {
       console.error('Error submitting grades:', error);
       setSubmitMessage('❌ Failed to submit grades. Please try again.');
@@ -121,15 +120,14 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
         {students.map((student) => {
           const isGraded = gradedStudents.has(student._id);
           const studentMark = marks[student._id] || 0;
-          
+
           return (
-            <div 
-              key={student._id} 
-              className={`flex items-center justify-between p-3 border-2 rounded transition-colors ${
-                isGraded 
-                  ? 'border-green-300 bg-green-50' 
+            <div
+              key={student._id}
+              className={`flex items-center justify-between p-3 border-2 rounded transition-colors ${isGraded
+                  ? 'border-green-300 bg-green-50'
                   : 'border-gray-200 bg-white'
-              }`}
+                }`}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -147,9 +145,8 @@ const GradingDialog: React.FC<GradingDialogProps> = ({
                   step="0.1"
                   value={studentMark}
                   onChange={(e) => handleMarkChange(student._id, e.target.value)}
-                  className={`w-20 border-2 p-2 text-center font-bold rounded ${
-                    isGraded ? 'border-green-400 bg-green-50' : 'border-black'
-                  }`}
+                  className={`w-20 border-2 p-2 text-center font-bold rounded ${isGraded ? 'border-green-400 bg-green-50' : 'border-black'
+                    }`}
                   disabled={isLoading}
                 />
               </div>

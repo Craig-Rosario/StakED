@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Award, BookOpen, TrendingUp, Wallet } from "lucide-react";
+import { Award, BookOpen, Wallet } from "lucide-react";
 import ManualClaim from "../../components/ManualClaim";
 import { StudentAnalytics } from "../../components/StudentAnalytics";
 
@@ -97,6 +97,8 @@ export default function StudentDashboard() {
           stake.isWinner && !stake.isClaimed && stake.rewardAmount > 0
         );
         setClaimableStakes(claimable);
+        console.log("", claimableStakes.length);
+
 
         const groupedByExam = claimable.reduce((groups: Record<string, GroupedClaimableExam>, stake: ClaimableStake) => {
           const examId = stake.exam?._id;

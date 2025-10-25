@@ -53,18 +53,27 @@ async function getLogsFromBlockscout(contractAddress: string) {
 
 // Helper function to get block timestamp from Blockscout
 async function getBlockTimestamp(blockNumber: string): Promise<number> {
+  // ✅ Prevent invalid API calls
+  if (!blockNumber || blockNumber === "0x0" || blockNumber === "0") {
+    return Date.now() / 1000; // fallback to current time
+  }
+
   try {
     const response = await fetch(`${BLOCKSCOUT_BASE_URL}/blocks/${blockNumber}`);
+    if (!response.ok) {
+      throw new Error(`Blockscout returned ${response.status}`);
+    }
     const data = await response.json();
     return new Date(data.timestamp).getTime() / 1000;
   } catch {
-    // Fallback: estimate timestamp based on current time and block number
-    const latestBlock = 9468000; // Approximate latest block
-    const secondsPerBlock = 12; // Ethereum average
+    // Fallback: estimate timestamp based on block diff
+    const latestBlock = 9468000;
+    const secondsPerBlock = 12;
     const blockDiff = latestBlock - parseInt(blockNumber, 16);
-    return Date.now() / 1000 - (blockDiff * secondsPerBlock);
+    return Date.now() / 1000 - blockDiff * secondsPerBlock;
   }
 }
+
 
 
 export function useAnalytics(
@@ -82,14 +91,10 @@ export function useAnalytics(
     const fetchAnalytics = async () => {
       setIsLoading(true);
       try {
-        console.log("🔍 Starting analytics fetch for:", userAddress);
-
         const iface = new ethers.Interface(EXAM_STAKING_ABI);
         const logs = await getLogsFromBlockscout(
           CONTRACT_ADDRESSES.EXAM_STAKING_ADDRESS
         );
-
-        console.log("📊 Total logs found:", logs.length);
 
         let totalStaked = 0n;
         let totalEarnings = 0n;
@@ -123,7 +128,6 @@ export function useAnalytics(
               // Track stake amount per exam for accurate loss calculation
               const currentStake = userStakes.get(examId) || 0n;
               userStakes.set(examId, currentStake + amount);
-              console.log("💰 User stake found:", ethers.formatUnits(amount, 6), "PYUSD", "Exam:", examId.slice(0, 10) + '...');
             }
           }
 
@@ -133,7 +137,6 @@ export function useAnalytics(
               a.toLowerCase()
             );
             finals.set(examId, winners);
-            console.log("🏆 Exam finalized:", examId, "Winners:", winners.length);
           }
 
           else if (parsed.name === "Claimed") {
@@ -145,17 +148,12 @@ export function useAnalytics(
               // Track claim amount per exam for accurate win calculation
               const currentClaim = userClaims.get(examId) || 0n;
               userClaims.set(examId, currentClaim + payout);
-              console.log("💸 User claim found:", ethers.formatUnits(payout, 6), "PYUSD", "Exam:", examId.slice(0, 10) + '...');
             }
           }
-        }
-
-        console.log("📈 User stakes found:", userStakeCount);
-        console.log("🏁 Finalized exams:", finals.size);
+        };
 
         // Calculate win rate history with immutable historical data
         const calculateWinRateHistory = async (forceRefresh = false) => {
-          console.log("📊 Starting IMMUTABLE win rate history calculation");
 
           // Get stored historical data
           const storageKey = `winRateHistory_${userAddress.toLowerCase()}`;
@@ -165,7 +163,6 @@ export function useAnalytics(
             const stored = localStorage.getItem(storageKey);
             if (stored) {
               storedHistory = JSON.parse(stored);
-              console.log("� Loaded stored history:", storedHistory.length, "points");
             }
           } catch (error) {
             console.warn("⚠️ Failed to load stored history:", error);
@@ -173,7 +170,6 @@ export function useAnalytics(
 
           // Create a set of already processed exam IDs to prevent duplicates
           const processedExamIds = new Set(storedHistory.map(point => point.examId));
-          console.log("🔍 Already processed exams:", Array.from(processedExamIds));
 
           // Find new exams that haven't been processed yet
           const newExamPoints: Array<{
@@ -230,19 +226,12 @@ export function useAnalytics(
                 examId,
                 blockNumber: stakeInfo.blockNumber
               });
-
-              console.log("🆕 NEW EXAM FOUND:", {
-                examId: examId.slice(0, 10) + '...',
-                result: userWon ? 'WON' : 'LOST',
-                date: new Date(stakeInfo.timestamp * 1000).toLocaleString()
-              });
             }
           }
           if (!forceRefresh) {
             const stored = localStorage.getItem(storageKey);
             if (stored) {
               storedHistory = JSON.parse(stored);
-              console.log("📦 Using stored history:", storedHistory.length);
             }
           }
 
@@ -251,11 +240,8 @@ export function useAnalytics(
           newExamPoints.sort((a, b) => a.timestamp - b.timestamp);
 
           if (newExamPoints.length === 0) {
-            console.log("✅ No new exams to add, using stored history");
             return storedHistory;
           }
-
-          console.log("🔄 Adding", newExamPoints.length, "new exam(s) to history");
 
           // Create combined history with new points
           const allPoints = [...storedHistory];
@@ -289,14 +275,11 @@ export function useAnalytics(
             };
 
             allPoints.push(newDataPoint);
-
-            console.log(`➕ Added point: ${newPoint.won ? 'WON ✅' : 'LOST ❌'} - Running WR: ${cumulativeWinRate}% (${cumulativeWon}/${cumulativeTotal})`);
           }
 
           // Save updated history to localStorage
           try {
             localStorage.setItem(storageKey, JSON.stringify(allPoints));
-            console.log("� Saved updated history to localStorage");
           } catch (error) {
             console.warn("⚠️ Failed to save history:", error);
           }
@@ -308,14 +291,12 @@ export function useAnalytics(
             return dateA - dateB;
           });
 
-          console.log("📈 FINAL IMMUTABLE history:", allPoints.length, "points");
           return allPoints;
 
 
         };
 
         const winRateHistory = await calculateWinRateHistory(true);
-        console.log("📊 Final win rate history for chart:", winRateHistory);
 
         // Calculate analytics metrics from the immutable win rate history
         let won = 0;
@@ -337,18 +318,10 @@ export function useAnalytics(
               const claimedAmount = userClaims.get(fullExamId) || 0n;
               const stakedAmount = userStakes.get(fullExamId) || 0n;
 
-              console.log(`🔍 WIN CALCULATION for ${point.examId}:`, {
-                fullExamId: fullExamId.slice(0, 10) + '...',
-                claimedAmount: ethers.formatUnits(claimedAmount, 6) + ' PYUSD',
-                stakedAmount: ethers.formatUnits(stakedAmount, 6) + ' PYUSD',
-                hasClaimed: claimedAmount > 0n
-              });
-
               if (claimedAmount > 0n) {
                 // User has claimed rewards - count the full claim amount
                 totalReceivedFromWins += claimedAmount;
                 const netReward = parseFloat(ethers.formatUnits(claimedAmount, 6));
-                console.log(`✅ Win with claim: +${netReward} PYUSD received`);
 
                 examResults.push({
                   exam: `Exam ${point.examId}`,
@@ -383,12 +356,6 @@ export function useAnalytics(
             if (fullExamId) {
               const stakedAmount = userStakes.get(fullExamId) || 0n;
 
-              console.log(`🔍 LOSS CALCULATION for ${point.examId}:`, {
-                fullExamId: fullExamId.slice(0, 10) + '...',
-                stakedAmount: ethers.formatUnits(stakedAmount, 6) + ' PYUSD',
-                lossAmount: '-' + ethers.formatUnits(stakedAmount, 6) + ' PYUSD'
-              });
-
               // For losses: count the full stake amount as lost
               totalLostFromLosses += stakedAmount;
               const netReward = -parseFloat(ethers.formatUnits(stakedAmount, 6));
@@ -411,16 +378,6 @@ export function useAnalytics(
         // Calculate net earnings: Total received - Total lost
         const netEarnings = parseFloat(ethers.formatUnits(totalReceivedFromWins - totalLostFromLosses, 6));
 
-        console.log("📊 Analytics calculated from immutable history with actual amounts:", {
-          totalWon: won,
-          totalLost: lost,
-          totalExams: won + lost,
-          netEarnings: netEarnings,
-          historyPoints: winRateHistory.length,
-          totalReceived: ethers.formatUnits(totalReceivedFromWins, 6) + " PYUSD",
-          totalLostAmount: ethers.formatUnits(totalLostFromLosses, 6) + " PYUSD"
-        });
-
         const totalProcessed = won + lost;
         const winRate = totalProcessed > 0 ? (won / totalProcessed) * 100 : 0;
 
@@ -428,20 +385,13 @@ export function useAnalytics(
         const formattedStaked = parseFloat(ethers.formatUnits(totalStaked, 6));
 
         // Total Earnings: Use calculated net earnings (wins - losses, can be negative)
-        const blockchainEarnings = parseFloat(ethers.formatUnits(totalEarnings, 6));
-
-        console.log("💰 Financial Summary:", {
-          totalStakedFromBlockchain: formattedStaked + " PYUSD (cumulative stakes)",
-          blockchainClaimedEarnings: blockchainEarnings + " PYUSD (actual claims)",
-          calculatedNetEarnings: netEarnings + " PYUSD (wins - losses)",
-          using: "blockchain for staked, calculated for earnings display"
-        });
+        // const blockchainEarnings = parseFloat(ethers.formatUnits(totalEarnings, 6));
 
         let classesJoined = 0;
         const token = localStorage.getItem("token");
         if (token) {
           const res = await fetch(
-            `${import.meta.env.VITE_API_BASE || "http://localhost:4000/api"
+            `${import.meta.env.VITE_API_BASE
             }/classes/student`,
             {
               headers: { Authorization: `Bearer ${token}` },
@@ -452,14 +402,6 @@ export function useAnalytics(
             classesJoined = (data.classes || []).length;
           }
         }
-
-        console.log("🎯 Setting final metrics with blockchain data:", {
-          winRateHistoryLength: winRateHistory?.length || 0,
-          totalStakesWon: won,
-          totalStakesLost: lost,
-          winRate: Math.round(winRate),
-          userStakeCount
-        });
 
         setMetrics({
           totalStaked: `${formattedStaked.toFixed(2)} PYUSD`,

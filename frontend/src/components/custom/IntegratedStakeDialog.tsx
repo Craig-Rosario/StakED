@@ -49,13 +49,13 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       if (window.ethereum) {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.listAccounts();
-        
+
         if (accounts.length > 0) {
           const signer = await provider.getSigner();
           const address = await signer.getAddress();
           setWalletAddress(address);
           setStep("stake");
-          
+
           await getPyusdBalance(address, provider);
         }
       }
@@ -68,7 +68,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
     try {
       const PYUSD_ADDRESS = CONTRACT_ADDRESSES.PYUSD_ADDRESS;
       const PYUSD_ABI = ["function balanceOf(address account) external view returns (uint256)"];
-      
+
       const contract = new ethers.Contract(PYUSD_ADDRESS, PYUSD_ABI, provider);
       const balanceWei = await contract.balanceOf(address);
       setBalance(ethers.formatUnits(balanceWei, 6));
@@ -87,15 +87,15 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
-      
+
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      
+
       setWalletAddress(address);
       setStep("stake");
-      
+
       await getPyusdBalance(address, provider);
-      
+
       // No transaction hash for wallet connection - we'll skip notification here
     } catch (error: any) {
       console.error("Wallet connection failed:", error);
@@ -103,6 +103,8 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       setLoading(false);
     }
   };
+
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
   const handleConfirmStake = async () => {
     setLoading(true);
@@ -114,7 +116,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
         "function stake(bytes32 examId, address candidate, uint256 amount, uint256 predictedScore) external"
       ];
 
-      const response = await fetch('http://localhost:4000/api/exams/stake', {
+      const response = await fetch(`${API_BASE}/exams/stake`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,19 +139,19 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(data.blockchain.examId));
       const stakeAmountWei = ethers.parseUnits(amount, 6);
       const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
-      
+
       const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
       notify({
         txHash: stakeTx.hash
       });
-      
+
       const receipt = await stakeTx.wait();
       notify({
         txHash: receipt.hash
       });
-      
+
       await getPyusdBalance(walletAddress, provider);
-      
+
       onSuccess();
       onClose();
 
@@ -189,7 +191,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
     try {
       // Start the stake process
-      const response = await fetch('http://localhost:4000/api/exams/stake', {
+      const response = await fetch(`${API_BASE}/exams/stake`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,14 +199,14 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
         },
         body: JSON.stringify({
           examId,
-          candidateAddress: candidateAddress || walletAddress, 
+          candidateAddress: candidateAddress || walletAddress,
           amount: stakeAmount,
           predictedMarks: parseFloat(predictedMarks)
         })
       });
 
       const data = await response.json();
-      
+
       if (!data.success) {
         console.error("API error:", data.message);
         return;
@@ -217,7 +219,7 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
 
       const PYUSD_ADDRESS = CONTRACT_ADDRESSES.PYUSD_ADDRESS;
       const EXAM_STAKING_ADDRESS = CONTRACT_ADDRESSES.EXAM_STAKING_ADDRESS;
-      
+
       const PYUSD_ABI = [
         "function approve(address spender, uint256 amount) external returns (bool)",
         "function allowance(address owner, address spender) external view returns (uint256)"
@@ -242,20 +244,20 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
       const examContract = new ethers.Contract(EXAM_STAKING_ADDRESS, EXAM_ABI, signer);
       const examIdBytes = ethers.keccak256(ethers.toUtf8Bytes(data.blockchain.examId));
       const predictedScoreInt = Math.floor(parseFloat(predictedMarks));
-      
+
       const stakeTx = await examContract.stake(examIdBytes, candidateAddress || walletAddress, stakeAmountWei, predictedScoreInt);
       notify({
         txHash: stakeTx.hash
       });
-      
+
       const stakeTxReceipt = await stakeTx.wait();
       notify({
         txHash: stakeTxReceipt.hash
       });
-      
+
       // Update balance after successful stake
       await getPyusdBalance(walletAddress, provider);
-      
+
       onSuccess();
       onClose();
 
@@ -294,8 +296,8 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
               <p className="text-gray-600 mb-4">
                 Connect your MetaMask wallet to stake PYUSD
               </p>
-              <Button 
-                onClick={connectWallet} 
+              <Button
+                onClick={connectWallet}
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
@@ -383,8 +385,8 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
               <Button onClick={handleClose} className="flex-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
                 Cancel
               </Button>
-              <Button 
-                onClick={handleStake} 
+              <Button
+                onClick={handleStake}
                 disabled={loading || !amount || parseFloat(amount) <= 0 || !predictedMarks || parseFloat(predictedMarks) < 40 || parseFloat(predictedMarks) > 100}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
@@ -425,15 +427,15 @@ const IntegratedStakeDialog: React.FC<IntegratedStakeDialogProps> = ({
               <p className="text-sm text-gray-600">Predicted Score: {predictedMarks}%</p>
             </div>
             <div className="space-y-3">
-              <Button 
-                onClick={handleConfirmStake} 
+              <Button
+                onClick={handleConfirmStake}
                 disabled={loading}
                 className="w-full bg-green-600 hover:bg-green-700"
               >
                 {loading ? "Processing..." : "Confirm Stake"}
               </Button>
-              <Button 
-                onClick={() => setStep("stake")} 
+              <Button
+                onClick={() => setStep("stake")}
                 className="w-full border border-gray-300 bg-white hover:bg-gray-50"
                 disabled={loading}
               >

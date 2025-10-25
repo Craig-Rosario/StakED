@@ -69,12 +69,6 @@ export default function ClassmateAnalyticsDialog({
     return "text-red-600";
   };
 
-  const getEarningsColor = (earnings: number) => {
-    if (earnings > 0) return "text-green-600";
-    if (earnings < 0) return "text-red-600";
-    return "text-gray-600";
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-4xl bg-white border-4 border-black shadow-[12px_12px_0px_#000000] rounded-none p-6 max-h-[90vh] overflow-y-auto">

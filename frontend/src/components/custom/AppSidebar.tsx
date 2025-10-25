@@ -66,7 +66,7 @@ export const AppSidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    window.location.href = "http://localhost:5173";
+    window.location.href = "/";
   };
 
   const ProfileSection = () => (
