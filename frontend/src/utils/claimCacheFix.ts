@@ -26,21 +26,6 @@ export const clearClaimCache = () => {
   sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
 };
 
-// 2. Add this to your claim button onClick handler
-const handleClaimWithCacheClear = async () => {
-  try {
-    // Clear any cached data first
-    clearClaimCache();
-    
-    // Force a small delay to ensure cache is cleared
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Then proceed with normal claim logic
-    await handleClaimReward();
-  } catch (error) {
-    console.error('Claim failed:', error);
-  }
-};
 
 // 3. Add this meta tag to your HTML head (if possible)
 // <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">

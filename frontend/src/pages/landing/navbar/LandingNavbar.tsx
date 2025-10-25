@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Blocks, CircleHelp, Home, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { loginWithMetaMaskAsVerifier } from "@/lib/web3Auth";
+// import { loginWithMetaMaskAsVerifier } from "@/lib/web3Auth";
 
 export default function LandingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,9 +21,8 @@ export default function LandingNavbar() {
     try {
       setLoading(true);
 
-      const loggedUser = await loginWithMetaMaskAsVerifier();
+      // const loggedUser = await loginWithMetaMaskAsVerifier();
 
-      // Always navigate to verifier dashboard since this is specifically for verifiers
       navigate("/verifier/dashboard");
 
     } catch (err: any) {
