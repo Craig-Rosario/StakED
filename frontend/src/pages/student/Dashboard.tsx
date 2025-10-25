@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Award, BookOpen, TrendingUp, Wallet } from "lucide-react";
+import { Award, BookOpen, Wallet } from "lucide-react";
 import ManualClaim from "../../components/ManualClaim";
 import { StudentAnalytics } from "../../components/StudentAnalytics";
 

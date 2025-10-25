@@ -65,9 +65,11 @@ const GradeExam: React.FC = () => {
     fetchExamInfo();
   }, [examId]);
 
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+
   const fetchExamInfo = async () => {
     try {
-      const response = await fetch(`http://localhost:4000/api/exams/${examId}`, {
+      const response = await fetch(`${API_BASE}/exams/${examId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -167,7 +169,7 @@ const GradeExam: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:4000/api/exams/submit-grades', {
+      const response = await fetch(`${API_BASE}/exams/submit-grades`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

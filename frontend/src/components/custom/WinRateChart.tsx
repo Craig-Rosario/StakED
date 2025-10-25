@@ -145,20 +145,22 @@ const WinRateChart: React.FC<WinRateChartProps> = ({ data, className = "" }) => 
               dataKey="winRate"
               stroke="#3b82f6"
               strokeWidth={2}
-              dot={(props: { cx: number; cy: number; payload: WinRateDataPoint }) => {
-                const { cx, cy, payload } = props;
-                const isWin = payload.examResult === 'WON';
-                return (
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={6}
-                    fill={isWin ? '#10b981' : '#ef4444'}
-                    stroke="#fff"
-                    strokeWidth={2}
-                  />
-                );
-              }}
+              dot={(props: { cx: number; cy: number; index?: number; payload: WinRateDataPoint }) => {
+  const { cx, cy, payload, index } = props;
+  const isWin = payload.examResult === 'WON';
+  return (
+    <circle
+      key={payload.examId || index}  
+      cx={cx}
+      cy={cy}
+      r={6}
+      fill={isWin ? '#10b981' : '#ef4444'}
+      stroke="#fff"
+      strokeWidth={2}
+    />
+  );
+}}
+
               activeDot={{ 
                 r: 10, 
                 fill: '#1d4ed8',

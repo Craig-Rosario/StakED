@@ -146,37 +146,37 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
-      
+
       setStatus('Connected! Preparing transaction...');
 
       const contract = new ethers.Contract(contractAddress, EXAM_STAKING_ABI, signer);
-      
+
       const userAddress = await signer.getAddress();
-      
+
       const examIdBytes32 = ethers.keccak256(ethers.toUtf8Bytes(examId));
-      
+
       setStatus('Checking stake on blockchain...');
-      
+
       try {
         // Get exam details to find candidates
         const examDetails = await contract.getExam(examIdBytes32);
         const candidates = examDetails[7]; // candidates array
-        
+
         // Check if user has already claimed
         const hasClaimed = await contract.hasClaimed(examIdBytes32, userAddress);
         if (hasClaimed) {
           throw new Error('Rewards already claimed');
         }
-        
+
         // Check user's total stake across all candidates
         let totalStake = 0n;
         for (const candidate of candidates) {
           const stake = await contract.stakeOf(examIdBytes32, userAddress, candidate);
           totalStake += stake;
         }
-        
+
         setStatus(`Found stake: ${ethers.formatUnits(totalStake, 6)} PYUSD`);
-        
+
         if (totalStake === 0n) {
           throw new Error('No stake found for this exam');
         }
@@ -184,25 +184,26 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         throw new Error(`Stake verification failed: ${errorMessage}`);
       }
-      
+
       setStatus('Sending claim transaction...');
 
       const tx = await contract.claim(examIdBytes32);
-      
+
       setStatus(`Transaction sent! Hash: ${tx.hash}`);
       setStatus('Waiting for confirmation...');
 
       const receipt = await tx.wait();
-      
+
       if (receipt.status === 1) {
         setStatus('✅ Rewards claimed successfully! Updating database...');
-        
+
         // Mark stakes as claimed in the backend database
         try {
           const token = localStorage.getItem("token");
           console.log("📤 Marking stakes as claimed for exam ID:", examId);
-          
-          const dbResponse = await fetch(`http://localhost:4000/api/exams/mark-claimed`, {
+          const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
+
+          const dbResponse = await fetch(`${API_BASE}/exams/mark-claimed`, {  
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -210,7 +211,7 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
             },
             body: JSON.stringify({ examId })
           });
-          
+
           if (dbResponse.ok) {
             const result = await dbResponse.json();
             console.log("✅ Database update result:", result);
@@ -224,12 +225,12 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
           console.error('Database update failed:', dbError);
           setStatus('✅ Rewards claimed! (Note: Database update failed)');
         }
-        
+
         setTimeout(() => {
           onClose();
           // Update analytics instead of a full page reload
           if (window.updateAnalytics) window.updateAnalytics();
-          window.location.reload(); 
+          window.location.reload();
         }, 2000);
       } else {
         throw new Error('Transaction failed');
@@ -248,14 +249,14 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white border-4 border-black p-6 max-w-md mx-4 shadow-[8px_8px_0px_#000]">
         <h2 className="text-xl font-bold mb-4 text-center">Manual Claim Required</h2>
-        
+
         <div className="space-y-4 mb-6">
           <div className="p-3 bg-blue-50 border-2 border-blue-300">
             <p className="text-sm font-bold text-blue-800">
               🔗 Contract: <span className="font-mono text-xs break-all">{contractAddress}</span>
             </p>
           </div>
-          
+
           <div className="p-3 bg-green-50 border-2 border-green-300">
             <p className="text-sm font-bold text-green-800">
               📋 Exam ID: <span className="font-mono text-xs break-all">{examId}</span>
@@ -277,7 +278,7 @@ export default function ManualClaim({ contractAddress, examId, onClose }: Manual
           >
             {claiming ? 'CLAIMING...' : 'CLAIM WITH METAMASK'}
           </button>
-          
+
           <button
             onClick={onClose}
             disabled={claiming}
