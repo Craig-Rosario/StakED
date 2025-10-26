@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Blocks, CircleHelp, Home, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// import { loginWithMetaMaskAsVerifier } from "@/lib/web3Auth";
+import { loginWithMetaMaskAsVerifier } from "@/lib/web3Auth";
 
 export default function LandingNavbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,20 +18,22 @@ export default function LandingNavbar() {
   };
 
   const handleVerifierLogin = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      // const loggedUser = await loginWithMetaMaskAsVerifier();
+    const loggedUser = await loginWithMetaMaskAsVerifier();
 
+    if (loggedUser) {
       navigate("/verifier/dashboard");
-
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "MetaMask login failed");
-    } finally {
-      setLoading(false);
     }
-  };
+
+  } catch (err: any) {
+    console.error(err);
+    alert(err.message || "MetaMask login failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <nav className="w-full border-b-4 border-foreground bg-card z-50 top-0">
