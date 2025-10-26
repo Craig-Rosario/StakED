@@ -13,12 +13,14 @@
 
 ---
 
-### 🧪 For Judging Access
+### 🚨 For Judging Access
 
 For the judging process, we’ve provided **verifier access** inside the app.
 You will need **two MetaMask accounts**:
 - One to log in as a **student**
 - One to log in as a **verifier**
+
+ALSO MAKE SURE YOU HAVE PYUSD IN YOUR METAMASK ACCOUNT, THIS WILL BE ESSENTIAL IF YOU WANT TO STAKED
 
 A quick-access button for the **Verifier Dashboard** is available on the landing page for easy testing.
 
