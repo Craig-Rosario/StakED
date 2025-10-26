@@ -15,10 +15,15 @@
 
 ### 🚨 For Judging Access
 
-For the judging process, we’ve provided **verifier access** inside the app.
+For the judging process, we’ve provided **verifier access** inside the app. One account only provides access to one dashboard.
 You will need **two MetaMask accounts**:
 - One to log in as a **student**
 - One to log in as a **verifier**
+
+"Connect with metamask" button grants student access
+"Verifier access" button grants verifier access
+
+Once logged in this cannot be changed. This ensures safety for the website
 
 ALSO MAKE SURE YOU HAVE PYUSD IN YOUR METAMASK ACCOUNT, THIS WILL BE ESSENTIAL IF YOU WANT TO STAKE
 
