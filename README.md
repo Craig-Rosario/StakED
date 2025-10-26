@@ -20,7 +20,7 @@ You will need **two MetaMask accounts**:
 - One to log in as a **student**
 - One to log in as a **verifier**
 
-ALSO MAKE SURE YOU HAVE PYUSD IN YOUR METAMASK ACCOUNT, THIS WILL BE ESSENTIAL IF YOU WANT TO STAKED
+ALSO MAKE SURE YOU HAVE PYUSD IN YOUR METAMASK ACCOUNT, THIS WILL BE ESSENTIAL IF YOU WANT TO STAKE
 
 A quick-access button for the **Verifier Dashboard** is available on the landing page for easy testing.
 
