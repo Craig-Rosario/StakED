@@ -13,6 +13,12 @@
 
 ---
 
+## SYSTEM ARCHITECTURE
+
+<img width="1246" height="701" alt="image" src="https://github.com/user-attachments/assets/81e06305-0ce7-450f-9225-41432cb51f86" />
+
+---
+
 ### 🚨 For Judging Access
 
 For the judging process, we’ve provided **verifier access** inside the app. One account only provides access to one dashboard.
